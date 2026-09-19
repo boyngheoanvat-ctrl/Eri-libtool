@@ -15,16 +15,76 @@
 #include "Tool/Unity.h"
 #include "utils.h"
 
-// --- Khai báo Interface Objective-C Bridge (Dành cho iOS MTKView / ImGuiDrawView) ---
-#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+
+// --- Khai báo Interface Objective-C Bridge tích hợp Gesture & ImGuiDrawView ---
+@interface JHPP : NSObject
++ (UIViewController *)currentViewController;
+@end
+
 @interface ImGuiDrawView : NSObject
+- (instancetype)init;
+@property (nonatomic, strong) UIView *view;
 + (void)showChange:(BOOL)open;
 @end
-#else
-extern "C" {
-    void objc_setMenuVisible(bool visible);
+
+@interface MainLoader : NSObject
+@property (nonatomic, strong) ImGuiDrawView *vna;
+- (void)tapIconView;
+- (void)tapIconView2;
+@end
+
+@implementation MainLoader
+
+- (void)initTapGes {
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] init];
+    tap.numberOfTapsRequired = 2; // 2 lần chạm
+    tap.numberOfTouchesRequired = 3; // 3 ngón tay -> Bật menu (show: true)
+    
+    UIViewController *currVC = [JHPP currentViewController];
+    if (currVC && currVC.view) {
+        [currVC.view addGestureRecognizer:tap];
+    }
+    [tap addTarget:self action:@selector(tapIconView)];
 }
-#endif
+
+- (void)initTapGes2 {
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] init];
+    tap.numberOfTapsRequired = 2; // 2 lần chạm
+    tap.numberOfTouchesRequired = 2; // 2 ngón tay -> Tắt/Ẩn menu (show: false)
+    
+    UIViewController *currVC = [JHPP currentViewController];
+    if (currVC && currVC.view) {
+        [currVC.view addGestureRecognizer:tap];
+    }
+    [tap addTarget:self action:@selector(tapIconView2)];
+}
+
+- (void)tapIconView {
+    if (!_vna) {
+        ImGuiDrawView *vc = [[ImGuiDrawView alloc] init];
+        _vna = vc;
+    }
+    [ImGuiDrawView showChange:true];
+    UIWindow *mainWindow = [UIApplication sharedApplication].keyWindow;
+    if (mainWindow && mainWindow.rootViewController) {
+        [mainWindow.rootViewController.view addSubview:_vna.view];
+    }
+}
+
+- (void)tapIconView2 {
+    if (!_vna) {
+        ImGuiDrawView *vc = [[ImGuiDrawView alloc] init];
+        _vna = vc;
+    }
+    [ImGuiDrawView showChange:false];
+    UIWindow *mainWindow = [UIApplication sharedApplication].keyWindow;
+    if (mainWindow && mainWindow.rootViewController) {
+        [mainWindow.rootViewController.view addSubview:_vna.view];
+    }
+}
+
+@end
 
 // --- Phần xử lý của Nova Proxy Engine ---
 void RunProxyEngine() {
@@ -62,7 +122,6 @@ void draw_thread() {
     static ImVec2 lastSize = ImVec2(0, 0);
     static ImVec2 lastPos = ImVec2(0, 0);
 
-    // Cấu hình vị trí và kích thước mặc định cho cửa sổ ImGui (tương thích mọi phiên bản ImGui)
     static bool initPos = true;
     if (initPos) {
         ImGui::SetNextWindowPos(ImVec2(100, 100), 0);
@@ -85,7 +144,6 @@ void draw_thread() {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetFrameHeight()));
     }
 
-    // Hiển thị cửa sổ ImGui chính
     collapsed = !ImGui::Begin(title, nullptr, (fullScreen ? ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove : 0));
     
     if (fullScreen) {
@@ -111,12 +169,18 @@ void draw_thread() {
     ImGui::End();
 }
 
+static MainLoader *loaderInstance = nil;
+
 void *hack_thread(void *) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     
-#ifdef __OBJC__
-    [ImGuiDrawView showChange:YES];
-#endif
+    // Đăng ký cử chỉ chạm sau khi game đã load vào sảnh chính
+    dispatch_async(dispatch_get_main_queue(), ^{
+        loaderInstance = [[MainLoader alloc] init];
+        [loaderInstance initTapGes];
+        [loaderInstance initTapGes2];
+        [loaderInstance tapIconView]; // Tự động kích hoạt hiển thị menu lần đầu
+    });
 
     std::thread(RunProxyEngine).detach();
     initModMenu((void *)draw_thread, nullptr);
