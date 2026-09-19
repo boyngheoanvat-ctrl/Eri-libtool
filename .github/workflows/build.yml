@@ -133,7 +133,7 @@ jobs:
           TWEAK_NAME := EriLibtool
 
           EriLibtool_FILES = Main.cpp
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=unused-const-variable -Wno-error=unused-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
 
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
