@@ -11,19 +11,17 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: List files for debugging
-      run: ls -la
+    - name: Debug - List workspace files
+      run: |
+        pwd
+        ls -la
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release .
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build Project
       run: cmake --build build --config Release
