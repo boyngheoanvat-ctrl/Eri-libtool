@@ -1,0 +1,6 @@
+#pragma once
+
+namespace Unity {
+    // Giả lập các hàm tương tác với Unity Engine (ví dụ: Camera, GameObject, Transform...)
+    // Nếu Main.cpp gọi đến hàm Unity nào, bạn có thể mock thêm vào đây.
+}
