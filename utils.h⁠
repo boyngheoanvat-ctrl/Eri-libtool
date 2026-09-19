@@ -1,0 +1,4 @@
+#pragma once
+
+// File tiện ích cấp cao nhất (root level).
+// Dùng để chứa các macro hoặc hàm helper độc lập với các module khác.
