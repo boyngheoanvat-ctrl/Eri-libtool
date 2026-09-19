@@ -15,16 +15,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y \
-            build-essential cmake git curl wget zip unzip xz-utils
-
-      - name: Ensure Directories and Mock Headers
-        run: |
-          mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni
-          touch Il2cpp/Il2cpp.h Il2cpp/il2cpp-class.h Includes/NovaProxy.h nlohmann/json.hpp imgui/imgui.h imgui/imgui_internal.h Includes/Logger.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h jni/jni.h
-
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
         id: setup-ndk
@@ -59,11 +49,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y \
-            build-essential git perl libssl-dev curl wget zip unzip xz-utils libtinfo6
-
       - name: Setup Theos
         run: |
           git clone --depth=1 --recursive https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
@@ -84,37 +69,14 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
-      - name: Auto-Patch and Build iOS Tweak
+      - name: Build iOS Tweak
         run: |
-          mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
+          if ! grep -q "#include <array>" Main.cpp; then
+            sed -i '1i #include <array>' Main.cpp
+          fi
 
-          # Tạo các file mock header cơ bản
-          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h
-
-          cat << 'EOF' > jni/jni.h
-          #pragma once
-          #ifndef JNI_H
-          #define JNI_H
-          typedef void* JNIEnv;
-          typedef void* jobject;
-          typedef void* jclass;
-          typedef void* jstring;
-          #endif
-          EOF
-
-          cat << 'EOF' > android/native_window_jni.h
-          #pragma once
-          #ifndef NATIVE_WINDOW_JNI_H
-          #define NATIVE_WINDOW_JNI_H
-          #endif
-          EOF
-
-          # Tự động vô hiệu hóa các lệnh include jni đặc thù của Android trong Main.cpp khi build iOS
-          sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
-          sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
-
-          # Đảm bảo Makefile chuẩn cho Theos
-          cat << 'EOF' > Makefile
+          if [ ! -f "Makefile" ]; then
+            cat << 'EOF' > Makefile
           TARGET := iphone:clang:latest:14.0
           ARCHS := arm64 arm64e
 
@@ -126,8 +88,8 @@ jobs:
           EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
 
           include $(THEOS_MAKE_PATH)/tweak.mk
-          include $(THEOS_MAKE_PATH)/aggregate.mk
           EOF
+          fi
 
           if [ ! -f "control" ]; then
             cat << 'EOF' > control
