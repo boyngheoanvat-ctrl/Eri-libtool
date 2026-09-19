@@ -5,6 +5,5 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_library(combined_mod SHARED 
     proxy_main.cpp
-    mod_main.cpp
+    Main.cpp
 )
-
