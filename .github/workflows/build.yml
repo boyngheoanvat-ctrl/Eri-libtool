@@ -240,11 +240,23 @@ jobs:
         run: |
           mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
 
-          touch Il2cpp/il2cpp-class.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h nlohmann/json.hpp imgui/imgui_internal.h
+          # Đảm bảo các file cơ bản tồn tại
+          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h
 
-          # Tự động vô hiệu hóa các thư viện đặc thù của Android trong Main.cpp khi biên dịch iOS
+          # Vô hiệu hóa include Android gốc trong Main.cpp
           sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
           sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
+
+          # Tự động chèn #include <array> vào đầu Main.cpp nếu chưa có
+          if ! grep -q "#include <array>" Main.cpp; then
+            sed -i '1i #include <array>' Main.cpp
+          fi
+
+          # Định nghĩa lại OBFUSCATE trực tiếp
+          cat << 'EOF' > Includes/obfuscate.h
+          #pragma once
+          #define OBFUSCATE(x) x
+          EOF
 
           cat << 'EOF' > Includes/Logger.h
           #pragma once
@@ -269,13 +281,29 @@ jobs:
           }
           EOF
 
+          cat << 'EOF' > nlohmann/json.hpp
+          #pragma once
+          #include <string>
+          namespace nlohmann {
+              class ordered_json {
+              public:
+                  template<typename... Args>
+                  ordered_json(Args&&...) {}
+                  std::string dump(int w = 0, char f = ' ') { return ""; }
+              };
+          }
+          EOF
+
           cat << 'EOF' > Il2cpp/Il2cpp.h
           #pragma once
           #include <vector>
           #include <string>
           struct Il2CppImage {};
           struct MethodInfo { void* getClass() { return nullptr; } };
-          struct HookerData { std::string name; };
+          struct HookerData {
+              static inline std::vector<HookerData> visited;
+              std::string name;
+          };
           EOF
 
           cat << 'EOF' > imgui/imgui.h
