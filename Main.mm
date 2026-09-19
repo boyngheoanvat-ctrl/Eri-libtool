@@ -17,6 +17,17 @@
 #import "Tool/Unity.h"
 #import "utils.h"
 
+// --- Khai báo Interface (Bắt buộc phải đứng trước @implementation) ---
+@interface JHPP : NSObject
++ (UIViewController *)currentViewController;
+@end
+
+@interface ImGuiDrawView : NSObject
+@property (nonatomic, strong) UIView *view;
+- (instancetype)init;
++ (void)showChange:(BOOL)open;
+@end
+
 // --- Hiện thực hóa JHPP ---
 @implementation JHPP
 + (UIViewController *)currentViewController {
