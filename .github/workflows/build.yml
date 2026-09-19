@@ -15,12 +15,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Debug - Scan all files in workspace
-      run: |
-        echo "=== Current Directory ==="
-        pwd
-        echo "=== Recursive File Tree ==="
-        find . -maxdepth 3 -not -path '*/.*'
+    - name: List workspace contents to verify
+      run: find . -maxdepth 2 -ls
 
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
