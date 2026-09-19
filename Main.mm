@@ -6,7 +6,10 @@
 #import <pthread.h> 
 #import <unistd.h>              
 #import <UIKit/UIKit.h>
-
+#import "Esp/CaptainHook.h"
+#import "Esp/ImGuiDrawView.h"
+#import "Esp/MonoString.h"
+#include "Esp/dbdef.h"
 #import "Menu/ImGui.h"
 #import "Tool/Keyboard.h"
 #import "Tool/Tool.h"
