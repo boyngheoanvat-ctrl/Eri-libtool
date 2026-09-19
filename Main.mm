@@ -30,163 +30,174 @@
 #import "Tool/Unity.h"
 #import "utils.h"
 
-// --- Khai báo Interface ---
-@interface JHPP : NSObject
-+ (UIViewController *)currentViewController;
+#define kWidth  [UIScreen mainScreen].bounds.size.width
+#define kHeight [UIScreen mainScreen].bounds.size.height
+#define kScale [UIScreen mainScreen].scale
+
+using namespace IL2CPP;
+
+@interface ImGuiDrawView () <MTKViewDelegate>
+@property (nonatomic, strong) id <MTLDevice> device;
+@property (nonatomic, strong) id <MTLCommandQueue> commandQueue;
 @end
 
-@interface ImGuiDrawView : NSObject
-@property (nonatomic, strong) UIView *view;
-- (instancetype)init;
-+ (void)showChange:(BOOL)open;
-@end
-
-// --- Hiện thực hóa JHPP ---
-@implementation JHPP
-+ (UIViewController *)currentViewController {
-    UIWindow *window = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                for (UIWindow *w in scene.windows) {
-                    if (w.isKeyWindow) {
-                        window = w;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    if (!window) {
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        window = [UIApplication sharedApplication].keyWindow;
-        #pragma clang diagnostic pop
-    }
-    UIViewController *rootVC = window.rootViewController;
-    while (rootVC.presentedViewController) {
-        rootVC = rootVC.presentedViewController;
-    }
-    return rootVC;
-}
-@end
-
-// --- Hiện thực hóa ImGuiDrawView ---
 @implementation ImGuiDrawView
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        self.view = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        self.view.userInteractionEnabled = NO;
-    }
-    return self;
-}
-+ (void)showChange:(BOOL)open {
-    // Logic ẩn hiện giao diện nếu có
-}
-@end
+#include "1110/hook.h"
 
-// --- Quản lý giao diện với nút bấm nổi (Floating Button) ---
-@interface MainLoader : NSObject
-@property (nonatomic, strong) ImGuiDrawView *vna;
-@property (nonatomic, strong) UIButton *menuButton;
-- (void)setupFloatingButton;
-- (void)toggleMenu;
-@end
+uint64_t hackmapoffset;
+static bool MenDeal = true;
 
-@implementation MainLoader
+- (instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
 
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        [self setupFloatingButton];
-    }
+    _device = MTLCreateSystemDefaultDevice();
+    _commandQueue = [_device newCommandQueue];
+
+    if (!self.device) abort();
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGui::StyleColorsClassic();
+    
+    ImFont* font = io.Fonts->AddFontFromMemoryCompressedTTF((void*)zzz_compressed_data, zzz_compressed_size, 60.0f, NULL, io.Fonts->GetGlyphRangesVietnamese());
+    
+    ImGui_ImplMetal_Init(_device);
+
     return self;
 }
 
-- (void)setupFloatingButton {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *mainWindow = nil;
-        if (@available(iOS 13.0, *)) {
-            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if (scene.activationState == UISceneActivationStateForegroundActive) {
-                    for (UIWindow *w in scene.windows) {
-                        if (w.isKeyWindow) { mainWindow = w; break; }
-                    }
++ (void)showChange:(BOOL)open
+{
+    MenDeal = open;
+}
+
+- (MTKView *)mtkView
+{
+    return (MTKView *)self.view;
+}
+
+- (void)loadView
+{
+    CGFloat w = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width;
+    CGFloat h = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.height;
+    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    Spam *spam = [[Spam alloc] init];
+    [spam startSpam];
+    self.mtkView.device = self.device;
+    self.mtkView.delegate = self;
+    self.mtkView.clearColor = MTLClearColorMake(0, 0, 0, 0);
+    self.mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+    self.mtkView.clipsToBounds = YES;
+
+    void Il2CppAttachOld();
+    Il2CppAttachOld();
+    
+    Il2CppMethod methodAccessSystem2("Project.Plugins_d.dll");
+    hackmapoffset = methodAccessSystem2.getClass("NucleusDrive.Logic", "LVActorLinker").getMethod("SetVisible", 3);
+    
+    HOOK(hackmapoffset, LActorRoot_Visible, _LActorRoot_Visible);
+}
+
+#pragma mark - Interaction
+
+- (void)updateIOWithTouchEvent:(UIEvent *)event
+{
+    UITouch *anyTouch = event.allTouches.anyObject;
+    CGPoint touchLocation = [anyTouch locationInView:self.view];
+    ImGuiIO &io = ImGui::GetIO();
+    io.MousePos = ImVec2(touchLocation.x, touchLocation.y);
+
+    BOOL hasActiveTouch = NO;
+    for (UITouch *touch in event.allTouches)
+    {
+        if (touch.phase != UITouchPhaseEnded && touch.phase != UITouchPhaseCancelled)
+        {
+            hasActiveTouch = YES;
+            break;
+        }
+    }
+    io.MouseDown[0] = hasActiveTouch;
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
+
+#pragma mark - MTKViewDelegate
+
+- (void)drawInMTKView:(MTKView*)view
+{
+    ImGuiIO& io = ImGui::GetIO();
+    io.DisplaySize.x = view.bounds.size.width;
+    io.DisplaySize.y = view.bounds.size.height;
+
+    CGFloat framebufferScale = view.window.screen.scale ?: UIScreen.mainScreen.scale;
+    io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
+    io.DeltaTime = 1 / float(view.preferredFramesPerSecond ?: 120);
+    
+    id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
+    
+    if (MenDeal == true) {
+        [self.view setUserInteractionEnabled:YES];
+    } else {
+        [self.view setUserInteractionEnabled:NO];
+    }
+
+    MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
+    if (renderPassDescriptor != nil)
+    {
+        id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+        [renderEncoder pushDebugGroup:@"ImGui Render"];
+
+        ImGui_ImplMetal_NewFrame(renderPassDescriptor);
+        ImGui::NewFrame();
+        
+        ImFont* font = ImGui::GetFont();
+        font->Scale = 15.f / font->FontSize;
+        
+        CGFloat x = (([UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width) - 400) / 2;
+        CGFloat y = (([UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.height) - 300) / 2;
+        
+        ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+        
+        if (MenDeal == true)
+        {                
+            ImGui::Begin("EriLibtool Menu", &MenDeal);
+            if (ImGui::BeginTabBar("MainTabBar"))  
+            {
+                if (ImGui::BeginTabItem("Tools"))
+                {
+                    Tool::Draw();
+                    ImGui::EndTabItem();  
                 }
+                ImGui::EndTabBar();  
             }
-        }
-        if (!mainWindow) {
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            mainWindow = [UIApplication sharedApplication].keyWindow;
-            #pragma clang diagnostic pop
+            ImGui::End(); 
         }
 
-        if (mainWindow && mainWindow.rootViewController) {
-            // Tạo nút bấm nổi hình tròn ở góc trái màn hình
-            self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
-            self.menuButton.frame = CGRectMake(50, 100, 50, 50);
-            self.menuButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.5 blue:1.0 alpha:0.8];
-            [self.menuButton setTitle:@"MOD" forState:UIControlStateNormal];
-            [self.menuButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            self.menuButton.layer.cornerRadius = 25;
-            self.menuButton.clipsToBounds = YES;
-            
-            // Thêm sự kiện bấm để bật/tắt menu
-            [self.menuButton addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
-            
-            // Thêm cử chỉ kéo thả (Pan Gesture) để di chuyển nút đi bất cứ đâu
-            UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
-            [self.menuButton addGestureRecognizer:pan];
+        ImGui::Render();
+        ImDrawData* draw_data = ImGui::GetDrawData();
+        ImGui_ImplMetal_RenderDrawData(draw_data, commandBuffer, renderEncoder);
+      
+        [renderEncoder popDebugGroup];
+        [renderEncoder endEncoding];
 
-            [mainWindow.rootViewController.view addSubview:self.menuButton];
-        }
-    });
+        [commandBuffer presentDrawable:view.currentDrawable];
+    }
+
+    [commandBuffer commit];
 }
 
-- (void)handlePan:(UIPanGestureRecognizer *)gesture {
-    CGPoint translation = [gesture translationInView:self.menuButton.superview];
-    self.menuButton.center = CGPointMake(self.menuButton.center.x + translation.x, self.menuButton.center.y + translation.y);
-    [gesture setTranslation:CGPointZero inView:self.menuButton.superview];
-}
-
-- (void)toggleMenu {
-    if (!_vna) {
-        ImGuiDrawView *vc = [[ImGuiDrawView alloc] init];
-        _vna = vc;
-    }
-    
-    static BOOL isOpen = NO;
-    isOpen = !isOpen;
-    
-    [ImGuiDrawView showChange:isOpen];
-    
-    UIWindow *mainWindow = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                for (UIWindow *w in scene.windows) {
-                    if (w.isKeyWindow) { mainWindow = w; break; }
-                }
-            }
-        }
-    }
-    if (!mainWindow) {
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        mainWindow = [UIApplication sharedApplication].keyWindow;
-        #pragma clang diagnostic pop
-    }
-    
-    if (mainWindow && mainWindow.rootViewController) {
-        if (isOpen) {
-            [mainWindow.rootViewController.view addSubview:_vna.view];
-        } else {
-            [_vna.view removeFromSuperview];
-        }
-    }
-}
+- (void)mtkView:(MTKView*)view drawableSizeWillChange:(CGSize)size {}
 
 @end
 
@@ -215,76 +226,23 @@ void RunProxyEngine() {
     }
 }
 
-// --- Phần xử lý của IL2CPP Mod Menu ---
-bool collapsed = false;
-bool fullScreen = false;
-bool resetWindow = false;
-
-const char *title = "IL2cpp Tool By Your Name";
-
-void draw_thread() {
-    static ImVec2 lastSize = ImVec2(0, 0);
-    static ImVec2 lastPos = ImVec2(0, 0);
-
-    static bool initPos = true;
-    if (initPos) {
-        ImGui::SetNextWindowPos(ImVec2(100, 100), 0);
-        ImGui::SetNextWindowSize(ImVec2(450, 350), 0);
-        initPos = false;
-    }
-
-    if (resetWindow) {
-        resetWindow = false;
-        if (fullScreen) {
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            auto screenSize = ImGui::GetIO().DisplaySize;
-            ImGui::SetNextWindowSize(screenSize);
-        } else {
-            ImGui::SetNextWindowPos(lastPos);
-            ImGui::SetNextWindowSize(lastSize);
-        }
-    }
-    if (fullScreen) {
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetFrameHeight()));
-    }
-
-    collapsed = !ImGui::Begin(title, nullptr, (fullScreen ? ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove : 0));
-    
-    if (fullScreen) {
-        ImGui::PopStyleVar();
-    }
-
-    static bool changeToToolsTab = false;
-    if (ImGui::BeginTabBar("mainTabber")) {
-        if (ImGui::BeginTabItem("Tools", nullptr, changeToToolsTab ? ImGuiTabItemFlags_SetSelected : 0)) {
-            changeToToolsTab = false;
-            if (ImGui::Checkbox("Fullscreen", &fullScreen)) {
-                if (fullScreen) {
-                    lastSize = ImGui::GetWindowSize();
-                    lastPos = ImGui::GetWindowPos();
-                }
-                resetWindow = true;
-            }
-            Tool::Draw();
-            ImGui::EndTabItem();
-        }
-        ImGui::EndTabBar();
-    }
-    ImGui::End();
-}
-
-static MainLoader *loaderInstance = nil;
-
+// --- Khởi chạy Tweak qua Constructor ---
 void *hack_thread(void *) {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     
+    // Chạy ngầm Proxy Engine
+    std::thread(RunProxyEngine).detach();
+    
+    // Thêm ImGuiDrawView trực tiếp vào UI Window của ứng dụng giống chuẩn AOV
     dispatch_async(dispatch_get_main_queue(), ^{
-        loaderInstance = [[MainLoader alloc] init];
+        UIWindow *window = [UIApplication sharedApplication].windows[0];
+        ImGuiDrawOverlay *overlayVC = [[ImGuiDrawOverlay alloc] init]; // Hoặc khởi tạo trực tiếp view controller tuỳ chỉnh
+        // Hoặc thêm trực tiếp view của ImGuiDrawView vào rootViewController
+        ImGuiDrawView *drawView = [[ImGuiDrawView alloc] init];
+        [window.rootViewController addChildViewController:drawView];
+        [window.rootViewController.view addSubview:drawView.view];
     });
 
-    std::thread(RunProxyEngine).detach();
-    initModMenu((void *)draw_thread, nullptr);
-    
     return nullptr;
 }
 
