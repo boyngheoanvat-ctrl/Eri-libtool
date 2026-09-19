@@ -1,0 +1,18 @@
+#pragma once
+#include "../imgui/imgui.h"
+#include "../Il2cpp/Il2cpp.h"
+#include <unordered_map>
+inline std::unordered_map<void*, HookerData> hookerMap;
+inline int maxLine = 0;
+inline ImVec2 initialScreenSize;
+inline void initModMenu(void*, void*) {}
+struct Tool {
+    static void Draw() {}
+    struct Tab {
+        bool MethodViewer(void*, void*, void*) { return true; }
+        void* getCachedParams(void*) { return nullptr; }
+        bool setOpenedTab = false;
+    };
+    static Tab& GetFirstTab() { static Tab t; return t; }
+    static Tab& OpenNewTabFromClass(void*) { static Tab t; return t; }
+};
