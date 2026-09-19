@@ -15,9 +15,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: List workspace contents to verify
-      run: find . -maxdepth 2 -ls
-
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
