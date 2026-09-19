@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build: 
+  build:
     name: Build Mod Library
     runs-on: ubuntu-latest
 
@@ -15,8 +15,19 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v3
+      with:
+        ndk-version: r26b
+        add-to-path: true
+
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      run: |
+        cmake -S . -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE="$ANDROID_SDK_ROOT/ndk-bundle/build/cmake/android.toolchain.cmake" \
+          -DANDROID_ABI="arm64-v8a" \
+          -DANDROID_PLATFORM="android-21"
 
     - name: Build Project
       run: cmake --build build --config Release
@@ -26,6 +37,4 @@ jobs:
       with:
         name: compiled-library
         path: |
-          build/*.dylib
           build/*.so
-          build/*.dll
