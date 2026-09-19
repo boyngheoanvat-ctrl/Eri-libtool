@@ -1,0 +1,15 @@
+#pragma once
+#include <vector>
+#include <string>
+struct Il2CppImage {};
+struct MethodInfo {
+    void* getClass() { return nullptr; }
+};
+struct HookerData {
+    static inline std::vector<HookerData> visited;
+    std::string name;
+    int hitCount = 0;
+    float time = 0;
+    float goneTime = 0;
+    MethodInfo* method = nullptr;
+};
