@@ -236,15 +236,37 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
-      - name: Create Mock Headers and Theos Files
+      - name: Create Complete Mock Headers and Theos Files
         run: |
-          mkdir -p jni Il2cpp Includes Menu Tool imgui nlohmann
-          
-          # Đảm bảo các file header cần thiết tồn tại cho iOS
-          touch Il2cpp/il2cpp-class.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h
+          mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni
 
-          if [ ! -f "Il2cpp/Il2cpp.h" ]; then
-            cat << 'EOF' > Il2cpp/Il2cpp.h
+          # Tạo đầy đủ các file header phụ thuộc
+          touch Il2cpp/il2cpp-class.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h nlohmann/json.hpp imgui/imgui_internal.h
+
+          cat << 'EOF' > Includes/Logger.h
+          #pragma once
+          #define LOGD(...) ((void)0)
+          namespace logger {
+              inline void Clear() {}
+          }
+          EOF
+
+          cat << 'EOF' > Includes/NovaProxy.h
+          #pragma once
+          #include <string>
+          namespace NovaProxy {
+              enum class LogLevel { INFO, DEBUG, ERR };
+              class ProxyUtils {
+              public:
+                  static void ConsoleInit() {}
+                  static void Log(std::string msg, LogLevel level) {}
+                  static bool LoadConfig(std::string path) { return true; }
+                  static bool InterceptTrafficPattern(std::string p) { return true; }
+              };
+          }
+          EOF
+
+          cat << 'EOF' > Il2cpp/Il2cpp.h
           #pragma once
           #include <vector>
           #include <string>
@@ -252,7 +274,34 @@ jobs:
           struct MethodInfo { void* getClass() { return nullptr; } };
           struct HookerData { std::string name; };
           EOF
-          fi
+
+          cat << 'EOF' > Menu/ImGui.h
+          #pragma once
+          #include "../imgui/imgui.h"
+          #include "../Il2cpp/Il2cpp.h"
+          #include <unordered_map>
+          inline std::unordered_map<void*, HookerData> hookerMap;
+          inline int maxLine = 0;
+          inline ImVec2 initialScreenSize;
+          inline void initModMenu(void*, void*) {}
+          struct Tool {
+              static void Draw() {}
+              struct Tab {
+                  bool MethodViewer(void*, void*, void*) { return true; }
+                  void* getCachedParams(void*) { return nullptr; }
+                  bool setOpenedTab = false;
+              };
+              static Tab& GetFirstTab() { static Tab t; return t; }
+              static Tab& OpenNewTabFromClass(void*) { static Tab t; return t; }
+          };
+          EOF
+
+          cat << 'EOF' > Tool/Keyboard.h
+          #pragma once
+          struct Keyboard {
+              static void Update() {}
+          };
+          EOF
 
           cat << 'EOF' > jni/jni.h
           #pragma once
