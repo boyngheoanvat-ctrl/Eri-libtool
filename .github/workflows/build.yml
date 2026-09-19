@@ -236,6 +236,38 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
+      - name: Create Theos Makefile and Control
+        run: |
+          if [ ! -f "Makefile" ]; then
+            cat << 'EOF' > Makefile
+          TARGET := iphone:clang:latest:14.0
+          ARCHS := arm64 arm64e
+
+          include $(THEOS)/makefiles/common.mk
+
+          TWEAK_NAME := EriLibtool
+
+          EriLibtool_FILES = Main.cpp
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -I./Includes -I./Menu -I./Il2cpp -I./imgui
+
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          EOF
+          fi
+
+          if [ ! -f "control" ]; then
+            cat << 'EOF' > control
+          Package: com.example.erilibtool
+          Name: EriLibtool
+          Depends: mobilesubstrate
+          Version: 0.0.1
+          Architecture: iphoneos-arm
+          Description: An awesome iOS tweak!
+          Maintainer: Developer
+          Author: Developer
+          Section: Tweaks
+          EOF
+          fi
+
       - name: Build Tweak
         run: |
           export THEOS="$GITHUB_WORKSPACE/theos"
