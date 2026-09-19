@@ -1,0 +1,5 @@
+#pragma once
+
+namespace ToolUtil {
+    // Các hàm xử lý nội bộ cho thư mục Tool
+}
