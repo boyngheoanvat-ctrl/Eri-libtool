@@ -23,7 +23,6 @@ jobs:
         run: |
           mkdir -p Il2cpp Includes Menu Tool imgui nlohmann
 
-          # Tự động chèn các include bắt buộc vào đầu tệp Main.cpp nếu chưa có
           if ! grep -q "Includes/NovaProxy.h" Main.cpp; then
             sed -i '1i #include "Includes/NovaProxy.h"\n#include "nlohmann/json.hpp"' Main.cpp
           fi
@@ -80,7 +79,7 @@ jobs:
           #pragma once
           #include <string>
           struct ImVec2 { float x, y; ImVec2(float x=0, float y=0):x(x),y(y){} };
-          struct ImVec4 { float x, y, z, w; ImVec4(float x=0, float y=0, float z=0, float w=0):x(x),y(y),z(z),w(w){} };
+          struct ImVec4 { float x, y, z, w; };
           struct ImGuiStyle {};
           struct ImColor {
               ImColor(float, float, float, float) {}
@@ -95,9 +94,16 @@ jobs:
               ImVec2 DisplaySize = {1920, 1080};
               float DeltaTime = 0.016f;
           };
+          inline float ImLerp(float a, float b, float t) { return a + (b - a) * t; }
+
           #define IM_COL32(r,g,b,a) (0)
           #define ImGuiStyleVar_FramePadding 0
           #define ImGuiChildFlags_None 0
+          #define ImGuiWindowFlags_NoResize (1 << 0)
+          #define ImGuiWindowFlags_NoMove (1 << 1)
+          #define ImGuiWindowFlags_HorizontalScrollbar (1 << 2)
+          #define ImGuiTabItemFlags_SetSelected (1 << 0)
+
           namespace ImGui {
               inline ImGuiIO& GetIO() { static ImGuiIO io; return io; }
               inline ImDrawList* GetBackgroundDrawList() { static ImDrawList list; return &list; }
@@ -151,11 +157,24 @@ jobs:
           };
           EOF
 
-          touch Includes/Logger.h Includes/Utils.h Includes/obfuscate.h
-          touch Tool/Keyboard.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h
+          cat << 'EOF' > Tool/Keyboard.h
+          #pragma once
+          struct Keyboard {
+              static void Update() {}
+          };
+          EOF
+
+          cat << 'EOF' > Includes/Logger.h
+          #pragma once
+          #define LOGD(...) ((void)0)
+          namespace logger {
+              inline void Clear() {}
+          }
+          EOF
+
+          touch Includes/Utils.h Includes/obfuscate.h
+          touch Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h
           
-          echo "#pragma once" > Includes/Logger.h
-          echo "#define LOGD(...) ((void)0)" >> Includes/Logger.h
           echo "#define OBFUSCATE(x) x" > Includes/obfuscate.h
 
       - name: Setup Android NDK
