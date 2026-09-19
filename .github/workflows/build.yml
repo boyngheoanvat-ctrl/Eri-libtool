@@ -115,12 +115,9 @@ jobs:
 
       - name: Build iOS Tweak
         run: |
-          if ! grep -q "#include <array>" Main.cpp; then
-            sed -i '1i #include <array>' Main.cpp
+          if ! grep -q "#import <array>" Main.mm; then
+            sed -i '1i #import <array>' Main.mm
           fi
-
-          sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
-          sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
 
           # Cấu hình filter chạy trên tất cả ứng dụng (*)
           if [ ! -f "EriLibtool.plist" ]; then
@@ -138,7 +135,7 @@ jobs:
 
           TWEAK_NAME := EriLibtool
 
-          EriLibtool_FILES = Main.cpp
+          EriLibtool_FILES = Main.mm
           EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
 
           include $(THEOS_MAKE_PATH)/tweak.mk
