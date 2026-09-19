@@ -119,9 +119,15 @@ jobs:
             sed -i '1i #include <array>' Main.cpp
           fi
 
-          # Vô hiệu hóa các thư viện Android khi build trên iOS
           sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
           sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
+
+          # Tạo file plist cấu hình filter ứng dụng cho iOS (mặc định chạy toàn cục hoặc thay com.apple.springboard bằng bundle ID game của bạn)
+          if [ ! -f "EriLibtool.plist" ]; then
+            cat << 'EOF' > EriLibtool.plist
+          { Filter = { Bundles = { "com.apple.springboard" }; }; }
+          EOF
+          fi
 
           if [ ! -f "Makefile" ]; then
             cat << 'EOF' > Makefile
@@ -133,7 +139,7 @@ jobs:
           TWEAK_NAME := EriLibtool
 
           EriLibtool_FILES = Main.cpp
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=unused-const-variable -Wno-error=unused-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
 
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
