@@ -236,13 +236,13 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
-      - name: Patch Main.cpp and Create Mock Headers for iOS
+      - name: Auto-Fix and Build iOS Tweak
         run: |
           mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
 
           touch Il2cpp/il2cpp-class.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h nlohmann/json.hpp imgui/imgui_internal.h
 
-          # Tự động loại bỏ hoặc bọc các include Android trong Main.cpp khi build iOS
+          # Tự động vô hiệu hóa các thư viện đặc thù của Android trong Main.cpp khi biên dịch iOS
           sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
           sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
 
@@ -376,7 +376,6 @@ jobs:
           #pragma once
           #ifndef NATIVE_WINDOW_JNI_H
           #define NATIVE_WINDOW_JNI_H
-          // Mock header for iOS compatibility
           #endif
           EOF
 
@@ -406,8 +405,6 @@ jobs:
           Section: Tweaks
           EOF
 
-      - name: Build Tweak
-        run: |
           export THEOS="$GITHUB_WORKSPACE/theos"
           make package
 
