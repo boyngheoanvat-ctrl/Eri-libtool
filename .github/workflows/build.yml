@@ -236,12 +236,26 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
-      - name: Create Mock jni.h and Theos Files
+      - name: Create Mock Headers and Theos Files
         run: |
-          mkdir -p jni
+          mkdir -p jni Il2cpp Includes Menu Tool imgui nlohmann
+          
+          # Đảm bảo các file header cần thiết tồn tại cho iOS
+          touch Il2cpp/il2cpp-class.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h
+
+          if [ ! -f "Il2cpp/Il2cpp.h" ]; then
+            cat << 'EOF' > Il2cpp/Il2cpp.h
+          #pragma once
+          #include <vector>
+          #include <string>
+          struct Il2CppImage {};
+          struct MethodInfo { void* getClass() { return nullptr; } };
+          struct HookerData { std::string name; };
+          EOF
+          fi
+
           cat << 'EOF' > jni/jni.h
           #pragma once
-          // Mock jni.h for iOS compilation compatibility
           typedef void* JNIEnv;
           typedef void* jobject;
           EOF
@@ -256,7 +270,7 @@ jobs:
           TWEAK_NAME := EriLibtool
 
           EriLibtool_FILES = Main.cpp
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
 
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
