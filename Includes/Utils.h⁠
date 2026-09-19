@@ -1,0 +1,5 @@
+#pragma once
+
+namespace Utils {
+    // Thêm các hàm tiện ích chung tại đây nếu Main.cpp hoặc các file khác có gọi đến
+}
