@@ -1,9 +1,0 @@
-cmake_minimum_required(VERSION 3.10)
-project(CombinedModProject)
-
-set(CMAKE_CXX_STANDARD 17)
-
-# Tự động quét mọi tệp .cpp trong thư mục gốc để tránh triệt để lỗi lệch chữ hoa/thường (main.cpp / Main.cpp)
-file(GLOB SOURCES "*.cpp")
-
-add_library(combined_mod SHARED ${SOURCES})
