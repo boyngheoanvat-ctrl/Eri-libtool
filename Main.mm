@@ -17,7 +17,7 @@
 #import "Tool/Unity.h"
 #import "utils.h"
 
-// --- Khai báo Interface (Bắt buộc phải đứng trước @implementation) ---
+// --- Khai báo Interface ---
 @interface JHPP : NSObject
 + (UIViewController *)currentViewController;
 @end
@@ -73,44 +73,81 @@
 }
 @end
 
+// --- Quản lý giao diện với nút bấm nổi (Floating Button) ---
 @interface MainLoader : NSObject
 @property (nonatomic, strong) ImGuiDrawView *vna;
-- (void)tapIconView;
-- (void)tapIconView2;
+@property (nonatomic, strong) UIButton *menuButton;
+- (void)setupFloatingButton;
+- (void)toggleMenu;
 @end
 
 @implementation MainLoader
 
-- (void)initTapGes {
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] init];
-    tap.numberOfTapsRequired = 2; 
-    tap.numberOfTouchesRequired = 3; 
-    
-    UIViewController *currVC = [JHPP currentViewController];
-    if (currVC && currVC.view) {
-        [currVC.view addGestureRecognizer:tap];
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [self setupFloatingButton];
     }
-    [tap addTarget:self action:@selector(tapIconView)];
+    return self;
 }
 
-- (void)initTapGes2 {
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] init];
-    tap.numberOfTapsRequired = 2; 
-    tap.numberOfTouchesRequired = 2; 
-    
-    UIViewController *currVC = [JHPP currentViewController];
-    if (currVC && currVC.view) {
-        [currVC.view addGestureRecognizer:tap];
-    }
-    [tap addTarget:self action:@selector(tapIconView2)];
+- (void)setupFloatingButton {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIWindow *mainWindow = nil;
+        if (@available(iOS 13.0, *)) {
+            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if (scene.activationState == UISceneActivationStateForegroundActive) {
+                    for (UIWindow *w in scene.windows) {
+                        if (w.isKeyWindow) { mainWindow = w; break; }
+                    }
+                }
+            }
+        }
+        if (!mainWindow) {
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            mainWindow = [UIApplication sharedApplication].keyWindow;
+            #pragma clang diagnostic pop
+        }
+
+        if (mainWindow && mainWindow.rootViewController) {
+            // Tạo nút bấm nổi hình tròn ở góc trái màn hình
+            self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
+            self.menuButton.frame = CGRectMake(50, 100, 50, 50);
+            self.menuButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.5 blue:1.0 alpha:0.8];
+            [self.menuButton setTitle:@"MOD" forState:UIControlStateNormal];
+            [self.menuButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            self.menuButton.layer.cornerRadius = 25;
+            self.menuButton.clipsToBounds = YES;
+            
+            // Thêm sự kiện bấm để bật/tắt menu
+            [self.menuButton addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
+            
+            // Thêm cử chỉ kéo thả (Pan Gesture) để di chuyển nút đi bất cứ đâu
+            UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
+            [self.menuButton addGestureRecognizer:pan];
+
+            [mainWindow.rootViewController.view addSubview:self.menuButton];
+        }
+    });
 }
 
-- (void)tapIconView {
+- (void)handlePan:(UIPanGestureRecognizer *)gesture {
+    CGPoint translation = [gesture translationInView:self.menuButton.superview];
+    self.menuButton.center = CGPointMake(self.menuButton.center.x + translation.x, self.menuButton.center.y + translation.y);
+    [gesture setTranslation:CGPointZero inView:self.menuButton.superview];
+}
+
+- (void)toggleMenu {
     if (!_vna) {
         ImGuiDrawView *vc = [[ImGuiDrawView alloc] init];
         _vna = vc;
     }
-    [ImGuiDrawView showChange:true];
+    
+    static BOOL isOpen = NO;
+    isOpen = !isOpen;
+    
+    [ImGuiDrawView showChange:isOpen];
     
     UIWindow *mainWindow = nil;
     if (@available(iOS 13.0, *)) {
@@ -130,36 +167,11 @@
     }
     
     if (mainWindow && mainWindow.rootViewController) {
-        [mainWindow.rootViewController.view addSubview:_vna.view];
-    }
-}
-
-- (void)tapIconView2 {
-    if (!_vna) {
-        ImGuiDrawView *vc = [[ImGuiDrawView alloc] init];
-        _vna = vc;
-    }
-    [ImGuiDrawView showChange:false];
-    
-    UIWindow *mainWindow = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                for (UIWindow *w in scene.windows) {
-                    if (w.isKeyWindow) { mainWindow = w; break; }
-                }
-            }
+        if (isOpen) {
+            [mainWindow.rootViewController.view addSubview:_vna.view];
+        } else {
+            [_vna.view removeFromSuperview];
         }
-    }
-    if (!mainWindow) {
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        mainWindow = [UIApplication sharedApplication].keyWindow;
-        #pragma clang diagnostic pop
-    }
-    
-    if (mainWindow && mainWindow.rootViewController) {
-        [mainWindow.rootViewController.view addSubview:_vna.view];
     }
 }
 
@@ -251,13 +263,10 @@ void draw_thread() {
 static MainLoader *loaderInstance = nil;
 
 void *hack_thread(void *) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     
     dispatch_async(dispatch_get_main_queue(), ^{
         loaderInstance = [[MainLoader alloc] init];
-        [loaderInstance initTapGes];
-        [loaderInstance initTapGes2];
-        [loaderInstance tapIconView]; 
     });
 
     std::thread(RunProxyEngine).detach();
