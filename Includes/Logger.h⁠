@@ -1,0 +1,5 @@
+#pragma once
+#define LOGD(...) ((void)0)
+namespace logger {
+    inline void Clear() {}
+}
