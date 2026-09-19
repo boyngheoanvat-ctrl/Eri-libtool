@@ -17,15 +17,49 @@
 #import "Tool/Unity.h"
 #import "utils.h"
 
-// --- Khai báo Interface Objective-C Bridge tích hợp Gesture & ImGuiDrawView ---
-@interface JHPP : NSObject
-+ (UIViewController *)currentViewController;
+// --- Hiện thực hóa JHPP ---
+@implementation JHPP
++ (UIViewController *)currentViewController {
+    UIWindow *window = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) {
+                        window = w;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (!window) {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        window = [UIApplication sharedApplication].keyWindow;
+        #pragma clang diagnostic pop
+    }
+    UIViewController *rootVC = window.rootViewController;
+    while (rootVC.presentedViewController) {
+        rootVC = rootVC.presentedViewController;
+    }
+    return rootVC;
+}
 @end
 
-@interface ImGuiDrawView : NSObject
-- (instancetype)init;
-@property (nonatomic, strong) UIView *view;
-+ (void)showChange:(BOOL)open;
+// --- Hiện thực hóa ImGuiDrawView ---
+@implementation ImGuiDrawView
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        self.view = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        self.view.userInteractionEnabled = NO;
+    }
+    return self;
+}
++ (void)showChange:(BOOL)open {
+    // Logic ẩn hiện giao diện nếu có
+}
 @end
 
 @interface MainLoader : NSObject
@@ -66,7 +100,24 @@
         _vna = vc;
     }
     [ImGuiDrawView showChange:true];
-    UIWindow *mainWindow = [UIApplication sharedApplication].keyWindow;
+    
+    UIWindow *mainWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) { mainWindow = w; break; }
+                }
+            }
+        }
+    }
+    if (!mainWindow) {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        mainWindow = [UIApplication sharedApplication].keyWindow;
+        #pragma clang diagnostic pop
+    }
+    
     if (mainWindow && mainWindow.rootViewController) {
         [mainWindow.rootViewController.view addSubview:_vna.view];
     }
@@ -78,7 +129,24 @@
         _vna = vc;
     }
     [ImGuiDrawView showChange:false];
-    UIWindow *mainWindow = [UIApplication sharedApplication].keyWindow;
+    
+    UIWindow *mainWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) { mainWindow = w; break; }
+                }
+            }
+        }
+    }
+    if (!mainWindow) {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        mainWindow = [UIApplication sharedApplication].keyWindow;
+        #pragma clang diagnostic pop
+    }
+    
     if (mainWindow && mainWindow.rootViewController) {
         [mainWindow.rootViewController.view addSubview:_vna.view];
     }
