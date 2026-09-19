@@ -84,9 +84,6 @@ void draw_thread() {
     if (fullScreen) {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetFrameHeight()));
     }
-    
-    int i = 0;
-    auto drawList = ImGui::GetBackgroundDrawList();
 
     // Hiển thị cửa sổ ImGui chính
     collapsed = !ImGui::Begin(title, nullptr, (fullScreen ? ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove : 0));
