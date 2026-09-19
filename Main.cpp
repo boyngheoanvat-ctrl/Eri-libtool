@@ -89,6 +89,14 @@ void draw_thread() {
     static ImVec2 lastSize = ImVec2(0, 0);
     static ImVec2 lastPos = ImVec2(0, 0);
 
+    // Cấu hình vị trí và kích thước mặc định cho cửa sổ ImGui lần đầu mở
+    static bool initPos = true;
+    if (initPos) {
+        ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(450, 350), ImGuiCond_FirstUseEver);
+        initPos = false;
+    }
+
     if (resetWindow) {
         resetWindow = false;
         if (fullScreen) {
@@ -103,6 +111,7 @@ void draw_thread() {
     if (fullScreen) {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetFrameHeight()));
     }
+    
     int i = 0;
     auto drawList = ImGui::GetBackgroundDrawList();
 
@@ -140,7 +149,11 @@ void draw_thread() {
         drawList->AddText(labellPos, color, label);
         i++;
     }
+
+    // Ép buộc focus và hiển thị cửa sổ
+    ImGui::SetNextWindowFocus();
     collapsed = !ImGui::Begin(title, nullptr, (fullScreen ? ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove : 0));
+    
     if (fullScreen) {
         ImGui::PopStyleVar();
     }
@@ -200,24 +213,14 @@ void draw_thread() {
     ImGui::End();
 }
 
-// --- Hook vòng lặp Unity / App Update để ép ImGui hiển thị trên iOS/Android ---
-#if defined(__APPLE__)
-// Hook hàm Update của Unity hoặc chạy trực tiếp vòng lặp render trên iOS
-void (*old_UnityUpdate)(void *instance) = nullptr;
-void hook_UnityUpdate(void *instance) {
-    if (old_UnityUpdate) old_UnityUpdate(instance);
-    // Đảm bảo ImGui luôn nhận diện context render mỗi frame
-}
-#endif
-
 void *hack_thread(void *) {
     logger::Clear();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     
     // Chạy song song Nova Proxy Engine
     std::thread(RunProxyEngine).detach();
 
-    // Khởi tạo Mod Menu ImGui với hàm draw callback
+    // Khởi tạo Mod Menu ImGui
     initModMenu((void *)draw_thread, nullptr);
     
     return nullptr;
