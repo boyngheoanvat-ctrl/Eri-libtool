@@ -240,7 +240,7 @@ jobs:
         run: |
           mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni
 
-          # Tạo đầy đủ các file header phụ thuộc
+          # Tạo đầy đủ tất cả các file header phụ thuộc
           touch Il2cpp/il2cpp-class.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h nlohmann/json.hpp imgui/imgui_internal.h
 
           cat << 'EOF' > Includes/Logger.h
@@ -309,8 +309,7 @@ jobs:
           typedef void* jobject;
           EOF
 
-          if [ ! -f "Makefile" ]; then
-            cat << 'EOF' > Makefile
+          cat << 'EOF' > Makefile
           TARGET := iphone:clang:latest:14.0
           ARCHS := arm64 arm64e
 
@@ -323,10 +322,8 @@ jobs:
 
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
-          fi
 
-          if [ ! -f "control" ]; then
-            cat << 'EOF' > control
+          cat << 'EOF' > control
           Package: com.example.erilibtool
           Name: EriLibtool
           Depends: mobilesubstrate
@@ -337,7 +334,6 @@ jobs:
           Author: Developer
           Section: Tweaks
           EOF
-          fi
 
       - name: Build Tweak
         run: |
