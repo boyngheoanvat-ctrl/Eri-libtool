@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.10)
+project(CombinedModProject)
+
+set(CMAKE_CXX_STANDARD 17)
+
+# Thêm định nghĩa thư viện động (Shared Library)
+# Nếu bạn muốn tạo file .dylib (cho macOS/iOS) hoặc .so (cho Android/Linux)
+add_library(combined_mod SHARED 
+    main.cpp
+    Main.cpp
+)
+
+# Thêm các include directory nếu cần thiết (ví dụ thư viện imgui, jni, v.v.)
+# target_include_directories(combined_mod PRIVATE path/to/headers)
