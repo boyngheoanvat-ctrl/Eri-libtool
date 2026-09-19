@@ -81,7 +81,6 @@ namespace ImGui {
     inline void PushStyleColor(int, unsigned int) {}
     inline void PopStyleColor(int = 1) {}
     inline bool Checkbox(const char*, bool*) { return false; }
-    inline bool Checkbox(const char*, bool* v) { return false; }
     inline void OpenPopup(const char*) {}
     inline void BeginChild(const char*, ImVec2, bool = false, int = 0) {}
     inline void EndChild() {}
@@ -89,9 +88,9 @@ namespace ImGui {
     inline void PopID() {}
     inline bool IsItemHeld() { return false; }
     inline bool BeginTabBar(const char*, int = 0) { return false; }
-    inline bool EndTabBar() {}
+    inline void EndTabBar() {}
     inline bool BeginTabItem(const char*, bool* = nullptr, int = 0) { return false; }
-    inline bool EndTabItem() { return; }
+    inline void EndTabItem() { return; }
     inline bool Text(const char*, ...) { return false; }
     inline bool Button(const char*) { return false; }
     inline float GetFrameHeight() { return 0.f; }
