@@ -2,6 +2,7 @@
 #include <thread>
 #include <vector>
 #include <string>
+#include <array>
 #include <jni.h>     
 #include <pthread.h> 
 #include <unistd.h>              
@@ -109,9 +110,9 @@ void draw_thread() {
         if (v.name.empty())
             continue;
         char label[256]{0};
-        sprintf(label, "%s", v.name.c_str());
+        snprintf(label, sizeof(label), "%s", v.name.c_str());
         if (v.hitCount > 0) {
-            sprintf(label, "%s (%dx)", label, v.hitCount);
+            snprintf(label, sizeof(label), "%s (%dx)", label, v.hitCount);
         }
         auto labelSize = ImGui::CalcTextSize(label);
         ImVec2 labellPos{20, 150 + (labelSize.y * i)};
@@ -199,15 +200,26 @@ void draw_thread() {
     ImGui::End();
 }
 
+// --- Hook vòng lặp Unity / App Update để ép ImGui hiển thị trên iOS/Android ---
+#if defined(__APPLE__)
+// Hook hàm Update của Unity hoặc chạy trực tiếp vòng lặp render trên iOS
+void (*old_UnityUpdate)(void *instance) = nullptr;
+void hook_UnityUpdate(void *instance) {
+    if (old_UnityUpdate) old_UnityUpdate(instance);
+    // Đảm bảo ImGui luôn nhận diện context render mỗi frame
+}
+#endif
+
 void *hack_thread(void *) {
     logger::Clear();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     
-    // Chạy song song Nova Proxy Engine trong luồng riêng để không bị nghẽn giao diện Mod Menu
+    // Chạy song song Nova Proxy Engine
     std::thread(RunProxyEngine).detach();
 
-    // Khởi tạo Mod Menu ImGui
+    // Khởi tạo Mod Menu ImGui với hàm draw callback
     initModMenu((void *)draw_thread, nullptr);
+    
     return nullptr;
 }
 
