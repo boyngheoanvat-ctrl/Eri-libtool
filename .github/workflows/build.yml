@@ -79,8 +79,36 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
-      - name: Build iOS Tweak
+      - name: Generate Makefile and Build iOS Tweak
         run: |
+          # Tự động tạo Makefile chuẩn cho Theos nếu chưa có
+          cat << 'EOF' > Makefile
+          include $(THEOS)/makefiles/common.mk
+
+          TWEAK_NAME := EriLibtool
+
+          EriLibtool_FILES = Main.cpp
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
+
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          include $(THEOS_MAKE_PATH)/aggregate.mk
+          EOF
+
+          # Tự động tạo control file nếu chưa có
+          if [ ! -f "control" ]; then
+            cat << 'EOF' > control
+          Package: com.example.erilibtool
+          Name: EriLibtool
+          Depends: mobilesubstrate
+          Version: 0.0.1
+          Architecture: iphoneos-arm
+          Description: An awesome iOS tweak!
+          Maintainer: Developer
+          Author: Developer
+          Section: Tweaks
+          EOF
+          fi
+
           export THEOS="$GITHUB_WORKSPACE/theos"
           make package
 
