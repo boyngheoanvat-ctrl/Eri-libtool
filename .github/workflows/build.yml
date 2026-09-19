@@ -19,6 +19,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: List files for debugging
+      run: ls -la
+
     - name: Configure CMake
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release .
 
