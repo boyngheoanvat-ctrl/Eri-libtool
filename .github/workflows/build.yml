@@ -23,19 +23,20 @@ jobs:
         run: |
           mkdir -p Il2cpp Includes Menu Tool imgui nlohmann
 
-          cat << 'EOF' > Includes/NovaProxy.h
+          cat << 'EOF' > Includes/Logger.h
           #pragma once
-          #include <string>
-          namespace NovaProxy {
-              enum class LogLevel { INFO, DEBUG, ERR };
-              class ProxyUtils {
-              public:
-                  static void ConsoleInit() {}
-                  static void Log(std::string msg, LogLevel level) {}
-                  static bool LoadConfig(std::string path) { return true; }
-                  static bool InterceptTrafficPattern(std::string p) { return true; }
-              };
-          }
+          #include <cstdio>
+          #define LOGD(...) ((void)0)
+          namespace logger { inline void Clear() {} }
+          EOF
+
+          cat << 'EOF' > Includes/Utils.h
+          #pragma once
+          EOF
+
+          cat << 'EOF' > Includes/obfuscate.h
+          #pragma once
+          #define OBFUSCATE(x) x
           EOF
 
           cat << 'EOF' > nlohmann/json.hpp
@@ -65,39 +66,112 @@ jobs:
               float goneTime = 0;
               void* method = nullptr;
           };
+          namespace NovaProxy {
+              enum class LogLevel { INFO, DEBUG, ERR };
+              class ProxyUtils {
+              public:
+                  static void ConsoleInit() {}
+                  static void Log(std::string msg, LogLevel level) {}
+                  static bool LoadConfig(std::string path) { return true; }
+                  static bool InterceptTrafficPattern(std::string p) { return true; }
+              };
+          }
           EOF
 
-          touch Il2cpp/il2cpp-class.h
+          cat << 'EOF' > Il2cpp/il2cpp-class.h
+          #pragma once
+          EOF
+
+          cat << 'EOF' > imgui/imgui.h
+          #pragma once
+          #include <string>
+          struct ImVec2 {
+              float x, y;
+              ImVec2(float _x=0, float _y=0) : x(_x), y(_y) {}
+          };
+          struct ImVec4 {
+              float x, y, z, w;
+          };
+          struct ImGuiStyle {};
+          struct ImGuiIO {
+              ImVec2 DisplaySize;
+              float DeltaTime;
+          };
+          namespace ImGui {
+              inline ImGuiIO& GetIO() { static ImGuiIO io; return io; }
+              inline void SetNextWindowPos(const ImVec2& pos, int cond = 0, const ImVec2& pivot = ImVec2(0,0)) {}
+              inline void SetNextWindowSize(const ImVec2& size, int cond = 0) {}
+              inline void PushStyleVar(int idx, float val) {}
+              inline void PushStyleVar(int idx, ImVec2 val) {}
+              inline void PopStyleVar(int count = 1) {}
+              inline auto GetBackgroundDrawList() { struct DL {
+                  void AddRectFilled(ImVec2 a, ImVec2 b, unsigned int col) {}
+                  void AddText(ImVec2 pos, unsigned int col, const char* text) {}
+              }; static DL dl; return &dl; }
+              inline bool Begin(const char* name, bool* p_open = nullptr, int flags = 0) { return true; }
+              inline void End() {}
+              inline void PushID(const void* int_id) {}
+              inline void PopID() {}
+              inline bool Checkbox(const char* label, bool* v) { return false; }
+              inline bool BeginTabBar(const char* str_id, int flags = 0) { return true; }
+              inline void EndTabBar() {}
+              inline bool BeginTabItem(const char* label, bool* p_open = nullptr, int flags = 0) { return true; }
+              inline void EndTabItem() {}
+              inline bool Button(const char* label, ImVec2 size = ImVec2(0,0)) { return false; }
+              inline void OpenPopup(const char* str_id, int flags = 0) {}
+              inline ImVec2 CalcTextSize(const char* text, const char* text_end = nullptr, bool hide_text_after_double_hash = false, float wrap_width = -1.0f) { return ImVec2(10,10); }
+              inline void BeginChild(const char* str_id, ImVec2 size = ImVec2(0,0), bool border = false, int flags = 0) {}
+              inline void EndChild() {}
+              inline void Text(const char* fmt, ...) {}
+              inline bool IsItemHeld() { return false; }
+          }
+          inline float ImLerp(float a, float b, float t) { return a + (b - a) * t; }
+          constexpr int ImGuiWindowFlags_NoResize = 1;
+          constexpr int ImGuiWindowFlags_NoMove = 2;
+          constexpr int ImGuiWindowFlags_HorizontalScrollbar = 4;
+          constexpr int ImGuiStyleVar_FramePadding = 0;
+          constexpr int ImGuiTabItemFlags_SetSelected = 1;
+          EOF
+
+          cat << 'EOF' > imgui/imgui_internal.h
+          #pragma once
+          EOF
 
           cat << 'EOF' > Menu/ImGui.h
           #pragma once
-          #include <string>
-          #include <vector>
-          #include <unordered_map>
-          #include "../Il2cpp/Il2cpp.h"
-          inline std::unordered_map<void*, HookerData> hookerMap;
-          inline int maxLine = 0;
-          struct ImVec2 { float x, y; ImVec2(float x=0, float y=0):x(x),y(y){} };
-          inline ImVec2 initialScreenSize;
+          #include "../imgui/imgui.h"
           inline void initModMenu(void*, void*) {}
-          struct Tool {
-              static void Draw() {}
-              struct Tab {
-                  bool MethodViewer(void*, void*, void*) { return true; }
-                  void* getCachedParams(void*) { return nullptr; }
-              };
-              static Tab& GetFirstTab() { static Tab t; return t; }
-              static Tab& OpenNewTabFromClass(void*) { static Tab t; return t; }
-          };
           EOF
 
-          touch Includes/Logger.h Includes/Utils.h Includes/obfuscate.h
-          touch Tool/Keyboard.h Tool/Tool.h Tool/Util.h Tool/Unity.h
-          touch imgui/imgui.h imgui/imgui_internal.h utils.h
-          
-          echo "#pragma once" > Includes/Logger.h
-          echo "#define LOGD(...) ((void)0)" >> Includes/Logger.h
-          echo "#define OBFUSCATE(x) x" > Includes/obfuscate.h
+          cat << 'EOF' > Tool/Keyboard.h
+          #pragma once
+          namespace Keyboard { inline void Update() {} }
+          EOF
+
+          cat << 'EOF' > Tool/Tool.h
+          #pragma once
+          struct TabView {
+              bool MethodViewer(void*, void*, void*) { return true; }
+              void* getCachedParams(void*) { return nullptr; }
+          };
+          namespace Tool {
+              inline void Draw() {}
+              inline TabView& GetFirstTab() { static TabView t; return t; }
+              inline TabView& OpenNewTabFromClass(void*) { static TabView t; return t; }
+          }
+          EOF
+
+          cat << 'EOF' > Tool/Util.h
+          #pragma once
+          EOF
+
+          cat << 'EOF' > Tool/Unity.h
+          #pragma once
+          EOF
+
+          cat << 'EOF' > utils.h
+          #pragma once
+          EOF
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
