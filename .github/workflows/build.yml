@@ -236,8 +236,16 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
-      - name: Create Theos Makefile and Control
+      - name: Create Mock jni.h and Theos Files
         run: |
+          mkdir -p jni
+          cat << 'EOF' > jni/jni.h
+          #pragma once
+          // Mock jni.h for iOS compilation compatibility
+          typedef void* JNIEnv;
+          typedef void* jobject;
+          EOF
+
           if [ ! -f "Makefile" ]; then
             cat << 'EOF' > Makefile
           TARGET := iphone:clang:latest:14.0
@@ -248,7 +256,7 @@ jobs:
           TWEAK_NAME := EriLibtool
 
           EriLibtool_FILES = Main.cpp
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -I./Includes -I./Menu -I./Il2cpp -I./imgui
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
 
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
