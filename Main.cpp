@@ -22,6 +22,17 @@
 #include "Tool/Unity.h"
 #include "utils.h"
 
+// --- Khai báo Interface Objective-C Bridge (Dành cho iOS MTKView / ImGuiDrawView) ---
+#ifdef __OBJC__
+@interface ImGuiDrawView : NSObject
++ (void)showChange:(BOOL)open;
+@end
+#else
+extern "C" {
+    void objc_setMenuVisible(bool visible);
+}
+#endif
+
 // --- Phần xử lý của Nova Proxy Engine ---
 void RunProxyEngine() {
     NovaProxy::ProxyUtils::ConsoleInit();
@@ -217,6 +228,11 @@ void *hack_thread(void *) {
     logger::Clear();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     
+    // Kích hoạt hiển thị Menu thông qua hàm showChange của ImGuiDrawView nếu biên dịch Objective-C++
+#ifdef __OBJC__
+    [ImGuiDrawView showChange:YES];
+#endif
+
     // Chạy song song Nova Proxy Engine
     std::thread(RunProxyEngine).detach();
 
