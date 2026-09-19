@@ -1,60 +1,64 @@
-name: Build Android Library
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y \
-            build-essential cmake git curl wget zip unzip xz-utils
-
       - name: Create Missing Header Folders & Files
         run: |
-          # Tạo các thư mục và header giả lập để code không bị lỗi thiếu file khi biên dịch
           mkdir -p Il2cpp Includes Menu Tool imgui
-          touch Il2cpp/Il2cpp.h Il2cpp/il2cpp-class.h
+          
+          # Tạo header giả lập cho NovaProxy
+          echo -n '#pragma once
+          #include <string>
+          namespace NovaProxy {
+              enum class LogLevel { INFO, DEBUG, ERR };
+              class ProxyUtils {
+              public:
+                  static void ConsoleInit() {}
+                  static void Log(std::string msg, LogLevel level) {}
+                  static bool LoadConfig(std::string path) { return true; }
+                  static bool InterceptTrafficPattern(std::string p) { return true; }
+              };
+          }' > Includes/NovaProxy.h
+
+          # Tạo header nlohmann json giả lập
+          mkdir -p nlohmann
+          echo -n '#pragma once
+          #include <string>
+          namespace nlohmann {
+              class ordered_json {
+              public:
+                  std::string dump(int w, char f) { return ""; }
+              };
+          }' > nlohmann/json.hpp
+
+          # Tạo các header cho Il2cpp và ImGui
+          echo -n '#pragma once
+          struct Il2CppImage {};
+          struct MethodInfo {
+              void* getClass();
+          };
+          struct HookerData {
+              static inline std::vector<HookerData> visited;
+              std::string name;
+              int hitCount = 0;
+              float time = 0;
+              float goneTime = 0;
+              void* method = nullptr;
+          };
+          ' > Il2cpp/Il2cpp.h
+          touch Il2cpp/il2cpp-class.h
+
+          echo -n '#pragma once
+          #include <string>
+          #include <vector>
+          #include <unordered_map>
+          inline std::unordered_map<void*, HookerData> hookerMap;
+          inline int maxLine = 0;
+          struct ImVec2 { float x, y; ImVec2(float x=0, float y=0):x(x),y(y){} };
+          inline ImVec2 initialScreenSize;
+          inline void initModMenu(void*, void*) {}
+          ' > Menu/ImGui.h
+
           touch Includes/Logger.h Includes/Utils.h Includes/obfuscate.h
-          touch Menu/ImGui.h
           touch Tool/Keyboard.h Tool/Tool.h Tool/Util.h Tool/Unity.h
           touch imgui/imgui.h imgui/imgui_internal.h utils.h
           
-          # Nội dung cơ bản chống lỗi trống header (nếu cần)
           echo "#pragma once" > Includes/Logger.h
-          echo "#define LOGD(...)" >> Includes/Logger.h
+          echo "#define LOGD(...) ((void)0)" >> Includes/Logger.h
           echo "#define OBFUSCATE(x) x" > Includes/obfuscate.h
-
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r26b
-          add-to-path: true
-
-      - name: Configure CMake
-        run: |
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake" \
-            -DANDROID_ABI="arm64-v8a" \
-            -DANDROID_PLATFORM="android-21"
-
-      - name: Build Project
-        run: cmake --build build --config Release
-
-      - name: Upload .so Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-mod-library
-          path: build/*.so
-          retention-days: 7
