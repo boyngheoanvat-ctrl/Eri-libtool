@@ -122,9 +122,10 @@ jobs:
           sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
           sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
 
+          # Cấu hình filter chạy trên tất cả ứng dụng (*)
           if [ ! -f "EriLibtool.plist" ]; then
             cat << 'EOF' > EriLibtool.plist
-          { Filter = { Bundles = { "com.apple.springboard" }; }; }
+          { Filter = { Bundles = { "*" }; }; }
           EOF
           fi
 
