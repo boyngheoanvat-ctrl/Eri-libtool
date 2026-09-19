@@ -18,7 +18,7 @@ jobs:
       - name: Prepare Mock Directories and Files
         run: |
           mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
-          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h jni/jni.h
+          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h jni/jni.h android/native_window_jni.h
 
           echo '#pragma once' > Includes/NovaProxy.h
           echo '#include "../eri.h"' >> Includes/NovaProxy.h
@@ -74,7 +74,7 @@ jobs:
       - name: Prepare Mock Directories and Files for iOS
         run: |
           mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
-          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h jni/jni.h
+          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h jni/jni.h android/native_window_jni.h
 
           echo '#pragma once' > Includes/NovaProxy.h
           echo '#include "../eri.h"' >> Includes/NovaProxy.h
@@ -119,7 +119,9 @@ jobs:
             sed -i '1i #include <array>' Main.cpp
           fi
 
+          # Vô hiệu hóa các thư viện Android khi build trên iOS
           sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
+          sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
 
           if [ ! -f "Makefile" ]; then
             cat << 'EOF' > Makefile
