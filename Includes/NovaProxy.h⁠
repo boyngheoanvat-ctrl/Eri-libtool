@@ -1,0 +1,12 @@
+#pragma once
+#include <string>
+namespace NovaProxy {
+    enum class LogLevel { INFO, DEBUG, ERR };
+    class ProxyUtils {
+    public:
+        static void ConsoleInit() {}
+        static void Log(std::string msg, LogLevel level) {}
+        static bool LoadConfig(std::string path) { return true; }
+        static bool InterceptTrafficPattern(std::string p) { return true; }
+    };
+}
