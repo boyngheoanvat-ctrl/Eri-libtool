@@ -1,0 +1,10 @@
+#pragma once
+#include <string>
+namespace nlohmann {
+    class ordered_json {
+    public:
+        template<typename... Args>
+        ordered_json(Args&&...) {}
+        std::string dump(int w = 0, char f = ' ') { return ""; }
+    };
+}
