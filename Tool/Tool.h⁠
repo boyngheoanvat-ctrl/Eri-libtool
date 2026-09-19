@@ -1,0 +1,4 @@
+#pragma once
+
+// Lưu ý: Cấu trúc cơ bản của `struct Tool` đã được gộp vào Menu/ImGui.h để tiện xử lý 
+// vòng lặp include. Tệp này đóng vai trò giữ chỗ (placeholder) để tránh lỗi file not found.
