@@ -128,7 +128,7 @@ jobs:
               inline void EndTabBar() {}
               inline bool BeginTabItem(const char*, bool* = nullptr, int = 0) { return true; }
               inline void EndTabItem() {}
-              inline void Text(const char*, ...) {}
+              inline bool Text(const char*, ...) { return false; }
               inline bool Button(const char*) { return false; }
               inline float GetFrameHeight() { return 0.f; }
               inline ImVec2 GetWindowSize() { return ImVec2(); }
@@ -236,11 +236,15 @@ jobs:
           rm -rf master.zip sdks-master
           echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
 
-      - name: Create Complete Mock Headers and Fix Menu/ImGui.h
+      - name: Patch Main.cpp and Create Mock Headers for iOS
         run: |
-          mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni
+          mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
 
           touch Il2cpp/il2cpp-class.h Includes/Utils.h Includes/obfuscate.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h nlohmann/json.hpp imgui/imgui_internal.h
+
+          # Tự động loại bỏ hoặc bọc các include Android trong Main.cpp khi build iOS
+          sed -i 's/#include <android\/native_window_jni.h>/\/\/#include <android\/native_window_jni.h>/g' Main.cpp
+          sed -i 's/#include <jni.h>/\/\/#include <jni.h>/g' Main.cpp
 
           cat << 'EOF' > Includes/Logger.h
           #pragma once
@@ -326,7 +330,7 @@ jobs:
               inline void EndTabBar() {}
               inline bool BeginTabItem(const char*, bool* = nullptr, int = 0) { return true; }
               inline void EndTabItem() {}
-              inline bool Text(const char*, ...) {}
+              inline bool Text(const char*, ...) { return false; }
               inline bool Button(const char*) { return false; }
               inline float GetFrameHeight() { return 0.f; }
               inline ImVec2 GetWindowSize() { return ImVec2(); }
@@ -334,7 +338,6 @@ jobs:
           }
           EOF
 
-          # Tự động sửa hoặc ghi đè Menu/ImGui.h để dùng đúng đường dẫn include
           cat << 'EOF' > Menu/ImGui.h
           #pragma once
           #include "imgui/imgui.h"
@@ -367,6 +370,14 @@ jobs:
           #pragma once
           typedef void* JNIEnv;
           typedef void* jobject;
+          EOF
+
+          cat << 'EOF' > android/native_window_jni.h
+          #pragma once
+          #ifndef NATIVE_WINDOW_JNI_H
+          #define NATIVE_WINDOW_JNI_H
+          // Mock header for iOS compatibility
+          #endif
           EOF
 
           cat << 'EOF' > Makefile
