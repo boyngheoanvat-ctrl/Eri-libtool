@@ -61,7 +61,7 @@ jobs:
           #include <string>
           struct Il2CppImage {};
           struct MethodInfo {
-              void* getClass();
+              void* getClass() { return nullptr; }
           };
           struct HookerData {
               static inline std::vector<HookerData> visited;
