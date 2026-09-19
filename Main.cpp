@@ -1,6 +1,9 @@
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <string>
 #include <jni.h>     
 #include <pthread.h> 
-#include <thread>
 #include <unistd.h>              
 #include "Il2cpp/Il2cpp.h"       
 #include "Il2cpp/il2cpp-class.h" 
@@ -16,21 +19,43 @@
 #include "sstream"
 #include <android/native_window_jni.h>
 #include "Tool/Unity.h"
+#include "utils.h"
 
-void logcatJson(nlohmann::ordered_json &json)
-{
+// --- Phần xử lý của Nova Proxy Engine ---
+void RunProxyEngine() {
+    NovaProxy::ProxyUtils::ConsoleInit();
+    NovaProxy::ProxyUtils::Log("Starting Nova Proxy Engine V1.4...", NovaProxy::LogLevel::INFO);
+    
+    if (!NovaProxy::ProxyUtils::LoadConfig("config.json")) {
+        NovaProxy::ProxyUtils::Log("FATAL: Failed to read local endpoint target map.", NovaProxy::LogLevel::ERR);
+        return;
+    }
+
+    uint16_t listen_port = 8443;
+    NovaProxy::ProxyUtils::Log("Daemon bind attached: 127.0.0.1:" + std::to_string(listen_port), NovaProxy::LogLevel::DEBUG);
+    NovaProxy::ProxyUtils::Log("Awaiting handshake intercepts from IDE extensions...", NovaProxy::LogLevel::INFO);
+
+    bool runtime_flag = true;
+    while(runtime_flag) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::string mock_packet = "POST /v1/engines/copilot-codex/completions HTTP/1.1";
+        if(NovaProxy::ProxyUtils::InterceptTrafficPattern(mock_packet)) {
+             NovaProxy::ProxyUtils::Log("[ROUTING] Handshake diverted to Free-LLM model pipeline.", NovaProxy::LogLevel::INFO);
+        }
+        break; 
+    }
+}
+
+// --- Phần xử lý của IL2CPP Mod Menu ---
+void logcatJson(nlohmann::ordered_json &json) {
     auto str = json.dump(4, '#');
     std::istringstream iss(str);
     std::string line;
-    while (std::getline(iss, line))
-    {
+    while (std::getline(iss, line)) {
         usleep(100);
         LOGD("%s", line.c_str());
     }
 }
-
-template <typename T>
-void ConfigSet(const char *key, T value);
 
 Il2CppImage *g_Image = nullptr;
 std::vector<MethodInfo *> g_Methods;
@@ -59,41 +84,33 @@ constexpr std::array<const char *, 3> possibleThemes = {
 ImGuiStyle initialStyle;
 const char *title = OBFUSCATE("IL2cpp Tool By Your Name");
 
-void draw_thread()
-{
+void draw_thread() {
     static ImVec2 lastSize = ImVec2(0, 0);
     static ImVec2 lastPos = ImVec2(0, 0);
 
-    if (resetWindow)
-    {
+    if (resetWindow) {
         resetWindow = false;
-        if (fullScreen)
-        {
+        if (fullScreen) {
             ImGui::SetNextWindowPos(ImVec2(0, 0));
             auto screenSize = ImGui::GetIO().DisplaySize;
             ImGui::SetNextWindowSize(screenSize);
-        }
-        else
-        {
+        } else {
             ImGui::SetNextWindowPos(lastPos);
             ImGui::SetNextWindowSize(lastSize);
         }
     }
-    if (fullScreen)
-    {
+    if (fullScreen) {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetFrameHeight()));
     }
     int i = 0;
     auto drawList = ImGui::GetBackgroundDrawList();
 
-    for (auto &v : HookerData::visited)
-    {
+    for (auto &v : HookerData::visited) {
         if (v.name.empty())
             continue;
         char label[256]{0};
         sprintf(label, "%s", v.name.c_str());
-        if (v.hitCount > 0)
-        {
+        if (v.hitCount > 0) {
             sprintf(label, "%s (%dx)", label, v.hitCount);
         }
         auto labelSize = ImGui::CalcTextSize(label);
@@ -102,21 +119,18 @@ void draw_thread()
         auto dt = ImGui::GetIO().DeltaTime;
         constexpr ImVec4 GREEN = {0.f, 1.f, 0.f, 1.f};
         ImColor color = ImColor(1.f, 1.f, 1.f, 1.f);
-        if (v.time > 0.f)
-        {
+        if (v.time > 0.f) {
             v.time -= dt;
             auto t = v.time;
             color = ImColor(ImLerp(color.Value.x, GREEN.x, t), ImLerp(color.Value.y, GREEN.y, t),
                             ImLerp(color.Value.z, GREEN.z, t), 1.f);
         }
         v.goneTime -= dt;
-        if (v.goneTime > 0.f && v.goneTime <= 1.f)
-        {
+        if (v.goneTime > 0.f && v.goneTime <= 1.f) {
             auto t = v.goneTime;
             color.Value.w = ImLerp(0.f, color.Value.w, t);
         }
-        if (v.goneTime <= 0.f)
-        {
+        if (v.goneTime <= 0.f) {
             v.name = "";
         }
 
@@ -126,22 +140,17 @@ void draw_thread()
         i++;
     }
     collapsed = !ImGui::Begin(title, nullptr, (fullScreen ? ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove : 0));
-    if (fullScreen)
-    {
+    if (fullScreen) {
         ImGui::PopStyleVar();
     }
 
     Keyboard::Update();
     static bool changeToToolsTab = false;
-    if (ImGui::BeginTabBar("mainTabber"))
-    {
-        if (ImGui::BeginTabItem("Tools", nullptr, changeToToolsTab ? ImGuiTabItemFlags_SetSelected : 0))
-        {
+    if (ImGui::BeginTabBar("mainTabber")) {
+        if (ImGui::BeginTabItem("Tools", nullptr, changeToToolsTab ? ImGuiTabItemFlags_SetSelected : 0)) {
             changeToToolsTab = false;
-            if (ImGui::Checkbox("Fullscreen", &fullScreen))
-            {
-                if (fullScreen)
-                {
+            if (ImGui::Checkbox("Fullscreen", &fullScreen)) {
+                if (fullScreen) {
                     lastSize = ImGui::GetWindowSize();
                     lastPos = ImGui::GetWindowPos();
                 }
@@ -151,21 +160,16 @@ void draw_thread()
             ImGui::EndTabItem();
         }
 
-        if (!hookerMap.empty())
-        {
-            if (ImGui::BeginTabItem("Tracer"))
-            {
+        if (!hookerMap.empty()) {
+            if (ImGui::BeginTabItem("Tracer")) {
                 ImGui::Text("Traced method count : %zu", hookerMap.size());
                 std::vector<HookerData *> sortedHooker;
-                for (auto &[name, data] : hookerMap)
-                {
+                for (auto &[name, data] : hookerMap) {
                     if (data.hitCount > 0)
                         sortedHooker.push_back(&data);
                 }
-                if (!sortedHooker.empty())
-                {
-                    if (ImGui::Button("Quick Restore"))
-                    {
+                if (!sortedHooker.empty()) {
+                    if (ImGui::Button("Quick Restore")) {
                         ImGui::OpenPopup("QuickRestorePopup");
                     }
                     std::sort(sortedHooker.begin(), sortedHooker.end(),
@@ -173,13 +177,11 @@ void draw_thread()
                     ImGui::BeginChild("TracerList", ImVec2(0, 0), ImGuiChildFlags_None,
                                       ImGuiWindowFlags_HorizontalScrollbar);
                     auto &tab = Tool::GetFirstTab();
-                    for (auto v : sortedHooker)
-                    {
+                    for (auto v : sortedHooker) {
                         ImGui::PushID(v->method);
                         bool opened =
                             tab.MethodViewer(v->method->getClass(), v->method, tab.getCachedParams(v->method));
-                        if (!opened && !changeToToolsTab && ImGui::IsItemHeld())
-                        {
+                        if (!opened && !changeToToolsTab && ImGui::IsItemHeld()) {
                             changeToToolsTab = true;
                             Tool::OpenNewTabFromClass(v->method->getClass()).setOpenedTab = true;
                             ImGui::PopID();
@@ -197,16 +199,19 @@ void draw_thread()
     ImGui::End();
 }
 
-void *hack_thread(void *)
-{
+void *hack_thread(void *) {
     logger::Clear();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    // Chạy song song Nova Proxy Engine trong luồng riêng để không bị nghẽn giao diện Mod Menu
+    std::thread(RunProxyEngine).detach();
+
+    // Khởi tạo Mod Menu ImGui
     initModMenu((void *)draw_thread, nullptr);
     return nullptr;
 }
 
-__attribute__((constructor)) void lib_main()
-{
+__attribute__((constructor)) void lib_main() {
     pthread_t ptid;
     pthread_create(&ptid, nullptr, hack_thread, nullptr);
 }
