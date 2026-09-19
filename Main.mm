@@ -1,21 +1,21 @@
-#include <iostream>
-#include <thread>
-#include <vector>
-#include <string>
-#include <array>
-#include <pthread.h> 
-#include <unistd.h>              
-#include "Menu/ImGui.h"
-#include "Tool/Keyboard.h"
-#include "Tool/Tool.h"
-#include "Tool/Util.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
-#include "sstream"
-#include "Tool/Unity.h"
-#include "utils.h"
-
+#import <iostream>
+#import <thread>
+#import <vector>
+#import <string>
+#import <array>
+#import <pthread.h> 
+#import <unistd.h>              
 #import <UIKit/UIKit.h>
+
+#import "Menu/ImGui.h"
+#import "Tool/Keyboard.h"
+#import "Tool/Tool.h"
+#import "Tool/Util.h"
+#import "imgui/imgui.h"
+#import "imgui/imgui_internal.h"
+#import "sstream"
+#import "Tool/Unity.h"
+#import "utils.h"
 
 // --- Khai báo Interface Objective-C Bridge tích hợp Gesture & ImGuiDrawView ---
 @interface JHPP : NSObject
@@ -38,8 +38,8 @@
 
 - (void)initTapGes {
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] init];
-    tap.numberOfTapsRequired = 2; // 2 lần chạm
-    tap.numberOfTouchesRequired = 3; // 3 ngón tay -> Bật menu (show: true)
+    tap.numberOfTapsRequired = 2; 
+    tap.numberOfTouchesRequired = 3; 
     
     UIViewController *currVC = [JHPP currentViewController];
     if (currVC && currVC.view) {
@@ -50,8 +50,8 @@
 
 - (void)initTapGes2 {
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] init];
-    tap.numberOfTapsRequired = 2; // 2 lần chạm
-    tap.numberOfTouchesRequired = 2; // 2 ngón tay -> Tắt/Ẩn menu (show: false)
+    tap.numberOfTapsRequired = 2; 
+    tap.numberOfTouchesRequired = 2; 
     
     UIViewController *currVC = [JHPP currentViewController];
     if (currVC && currVC.view) {
@@ -174,12 +174,11 @@ static MainLoader *loaderInstance = nil;
 void *hack_thread(void *) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     
-    // Đăng ký cử chỉ chạm sau khi game đã load vào sảnh chính
     dispatch_async(dispatch_get_main_queue(), ^{
         loaderInstance = [[MainLoader alloc] init];
         [loaderInstance initTapGes];
         [loaderInstance initTapGes2];
-        [loaderInstance tapIconView]; // Tự động kích hoạt hiển thị menu lần đầu
+        [loaderInstance tapIconView]; 
     });
 
     std::thread(RunProxyEngine).detach();
