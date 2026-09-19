@@ -18,7 +18,6 @@
 #include "Esp/dbdef.h"
 #include "1110/patch.h"
 #include "1110/haizzz.h"
-#import "il2cpp.h"
 #import "linh_tinh/spam.h"
 #import "Menu/ImGui.h"
 #import "Tool/Keyboard.h"
@@ -33,8 +32,6 @@
 #define kWidth  [UIScreen mainScreen].bounds.size.width
 #define kHeight [UIScreen mainScreen].bounds.size.height
 #define kScale [UIScreen mainScreen].scale
-
-using namespace IL2CPP;
 
 @interface ImGuiDrawView () <MTKViewDelegate>
 @property (nonatomic, strong) id <MTLDevice> device;
@@ -95,14 +92,6 @@ static bool MenDeal = true;
     self.mtkView.clearColor = MTLClearColorMake(0, 0, 0, 0);
     self.mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     self.mtkView.clipsToBounds = YES;
-
-    void Il2CppAttachOld();
-    Il2CppAttachOld();
-    
-    Il2CppMethod methodAccessSystem2("Project.Plugins_d.dll");
-    hackmapoffset = methodAccessSystem2.getClass("NucleusDrive.Logic", "LVActorLinker").getMethod("SetVisible", 3);
-    
-    HOOK(hackmapoffset, LActorRoot_Visible, _LActorRoot_Visible);
 }
 
 #pragma mark - Interaction
@@ -201,43 +190,12 @@ static bool MenDeal = true;
 
 @end
 
-// --- Phần xử lý của Nova Proxy Engine ---
-void RunProxyEngine() {
-    NovaProxy::ProxyUtils::ConsoleInit();
-    NovaProxy::ProxyUtils::Log("Starting Nova Proxy Engine V1.4...", NovaProxy::LogLevel::INFO);
-    
-    if (!NovaProxy::ProxyUtils::LoadConfig("config.json")) {
-        NovaProxy::ProxyUtils::Log("FATAL: Failed to read local endpoint target map.", NovaProxy::LogLevel::ERR);
-        return;
-    }
-
-    uint16_t listen_port = 8443;
-    NovaProxy::ProxyUtils::Log("Daemon bind attached: 127.0.0.1:" + std::to_string(listen_port), NovaProxy::LogLevel::DEBUG);
-    NovaProxy::ProxyUtils::Log("Awaiting handshake intercepts from IDE extensions...", NovaProxy::LogLevel::INFO);
-
-    bool runtime_flag = true;
-    while(runtime_flag) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        std::string mock_packet = "POST /v1/engines/copilot-codex/completions HTTP/1.1";
-        if(NovaProxy::ProxyUtils::InterceptTrafficPattern(mock_packet)) {
-             NovaProxy::ProxyUtils::Log("[ROUTING] Handshake diverted to Free-LLM model pipeline.", NovaProxy::LogLevel::INFO);
-        }
-        break; 
-    }
-}
-
 // --- Khởi chạy Tweak qua Constructor ---
 void *hack_thread(void *) {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     
-    // Chạy ngầm Proxy Engine
-    std::thread(RunProxyEngine).detach();
-    
-    // Thêm ImGuiDrawView trực tiếp vào UI Window của ứng dụng giống chuẩn AOV
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = [UIApplication sharedApplication].windows[0];
-        ImGuiDrawOverlay *overlayVC = [[ImGuiDrawOverlay alloc] init]; // Hoặc khởi tạo trực tiếp view controller tuỳ chỉnh
-        // Hoặc thêm trực tiếp view của ImGuiDrawView vào rootViewController
         ImGuiDrawView *drawView = [[ImGuiDrawView alloc] init];
         [window.rootViewController addChildViewController:drawView];
         [window.rootViewController.view addSubview:drawView.view];
