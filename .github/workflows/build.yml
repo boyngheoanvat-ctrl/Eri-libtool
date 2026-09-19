@@ -87,8 +87,8 @@ jobs:
               ImVec4 Value = {1,1,1,1};
           };
           struct ImDrawList {
-              template<typename... Args> void AddRectFilled(Args&&...) {}
-              template<typename... Args> void AddText(Args&&...) {}
+              void AddRectFilled(ImVec2, ImVec2, unsigned int, float = 0.0f, int = 0) {}
+              void AddText(ImVec2, ImColor, const char*) {}
           };
           struct ImGuiIO {
               ImVec2 DisplaySize = {1920, 1080};
