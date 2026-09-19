@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest] # Có thể chọn macOS để build .dylib
+        os: [ubuntu-latest, macos-latest]
 
     steps:
     - name: Checkout repository
