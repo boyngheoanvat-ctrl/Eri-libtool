@@ -118,6 +118,7 @@ jobs:
               inline void PushStyleColor(int, unsigned int) {}
               inline void PopStyleColor(int = 1) {}
               inline bool Checkbox(const char*, bool*) { return false; }
+              inline bool Checkbox(const char*, bool* v) { return false; }
               inline void OpenPopup(const char*) {}
               inline void BeginChild(const char*, ImVec2, bool = false, int = 0) {}
               inline void EndChild() {}
@@ -242,8 +243,12 @@ jobs:
 
           touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h
 
+          # Đảm bảo chèn #include <array> và các include bắt buộc vào Main.cpp
           if ! grep -q "#include <array>" Main.cpp; then
             sed -i '1i #include <array>' Main.cpp
+          fi
+          if ! grep -q "Includes/NovaProxy.h" Main.cpp; then
+            sed -i '1i #include "Includes/NovaProxy.h"\n#include "nlohmann/json.hpp"' Main.cpp
           fi
 
           cat << 'EOF' > Includes/obfuscate.h
@@ -345,6 +350,7 @@ jobs:
               inline void PushStyleColor(int, unsigned int) {}
               inline void PopStyleColor(int = 1) {}
               inline bool Checkbox(const char*, bool*) { return false; }
+              inline bool Checkbox(const char*, bool* v) { return false; }
               inline void OpenPopup(const char*) {}
               inline void BeginChild(const char*, ImVec2, bool = false, int = 0) {}
               inline void EndChild() {}
@@ -413,7 +419,7 @@ jobs:
           TWEAK_NAME := EriLibtool
 
           EriLibtool_FILES = Main.cpp
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
 
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
