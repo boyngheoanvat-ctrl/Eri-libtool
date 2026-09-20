@@ -22,24 +22,22 @@ jobs:
 
       - name: Setup Theos
         run: |
-          git clone --depth=1 https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
-          cd $GITHUB_WORKSPACE/theos
-          # ✅ This fixes "vendor/include missing" — fetches vendor tools
-          ./bin/update-theos
-          echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
+          export THEOS=$GITHUB_WORKSPACE/theos
+          # ✅ Clone WITH submodules = vendor/ included immediately
+          git clone --recursive --depth=1 https://github.com/theos/theos.git "$THEOS"
+          # ✅ Export THEOS to GitHub env for all subsequent steps
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
 
       - name: Install iOS SDKs
         run: |
-          cd $THEOS
-          mkdir -p sdks && cd sdks
+          mkdir -p "$THEOS/sdks" && cd "$THEOS/sdks"
           curl -fsSL https://github.com/theos/sdks/archive/refs/heads/master.zip -o sdks.zip
           unzip -q sdks.zip
           mv sdks-master/*.sdk ./
-          rm -rf sdks-master sdks.zip
+          rm -rf sdks-master sdks.zip sdks.zip
           ls -la  # Verify SDKs exist
 
       - name: Build
         run: |
-          export THEOS=$GITHUB_WORKSPACE/theos
           make clean
           make DEBUG=0
