@@ -99,7 +99,8 @@ jobs:
                              \$(wildcard 5Toubun/*.cpp) \$(wildcard 5Toubun/*.m) \
                              \$(wildcard linh_tinh/*.m) \$(wildcard lib/*.m)
                              
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./IMGUI -I./jni -I./1110 -I./Esp -I./5Toubun -I./lib -I./linh_tinh
+          EriLibtool_CFLAGS = -fobjc-arc -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./IMGUI -I./jni -I./1110 -I./Esp -I./5Toubun -I./lib -I./linh_tinh
+          EriLibtool_CCFLAGS = -std=c++17
           EriLibtool_LIBRARIES = 
 
           include \$(THEOS)/makefiles/tweak.mk
