@@ -26,15 +26,16 @@ jobs:
           git clone --recursive --depth=1 https://github.com/theos/theos.git "$THEOS"
           echo "THEOS=$THEOS" >> $GITHUB_ENV
 
-      # ✅ INSTALL LINUX TOOLCHAIN — fixes "clang: No such file or directory"
-      - name: Install Theos Linux toolchain
+      # ✅ CORRECT TOOLCHAIN SOURCE — from sbingner/llvm-project (official)
+      - name: Install Theos Linux iOS toolchain
         run: |
           cd "$THEOS"
-          curl -fsSL https://github.com/theos/toolchain/archive/refs/heads/master.tar.gz -o toolchain.tar.gz
-          tar -xf toolchain.tar.gz
-          mv toolchain-master toolchain
-          rm toolchain.tar.gz
-          ls -la toolchain/linux/iphone/bin/  # Should show clang
+          curl -fsSL https://github.com/sbingner/llvm-project/releases/latest/download/linux-ios-arm64e-clang-toolchain.tar.lzma -o toolchain.tar.lzma
+          tar --lzma -xf toolchain.tar.lzma
+          mkdir -p toolchain/linux
+          mv ios-arm64e-clang-toolchain toolchain/linux/iphone
+          rm toolchain.tar.lzma
+          ls -la toolchain/linux/iphone/bin/clang  # Verify
 
       - name: Install iOS SDKs
         run: |
