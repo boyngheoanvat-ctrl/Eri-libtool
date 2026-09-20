@@ -1,14 +1,26 @@
-#import <iostream>
-#import <thread>
-#import <vector>
-#import <string>
-#import <array>
-#import <pthread.h> 
-#import <unistd.h>              
+// ============================================================
+// Main.mm — FULL FIXED
+// ============================================================
+// ✅ Disable libc++ modules FIRST
+#define _LIBCPP_NO_MODULES 1
+
+// ✅ Use #include for C++ headers, not #import
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <string>
+#include <array>
+#include <sstream>
+#include <chrono>
+#include <pthread.h>
+#include <unistd.h>
+
+// ✅ Use #import ONLY for Objective-C frameworks
 #import <UIKit/UIKit.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <Foundation/Foundation.h>
+
 #import "Esp/CaptainHook.h"
 #import "Esp/ImGuiDrawView.h"
 #import "IMGUI/imgui.h"
@@ -23,15 +35,13 @@
 #import "Tool/Keyboard.h"
 #import "Tool/Tool.h"
 #import "Tool/Util.h"
-#import "imgui/imgui.h"
-#import "imgui/imgui_internal.h"
-#import "sstream"
+#import "IMGUI/imgui_internal.h"
 #import "Tool/Unity.h"
 #import "utils.h"
 
 #define kWidth  [UIScreen mainScreen].bounds.size.width
 #define kHeight [UIScreen mainScreen].bounds.size.height
-#define kScale [UIScreen mainScreen].scale
+#define kScale  [UIScreen mainScreen].scale
 
 @interface ImGuiDrawView () <MTKViewDelegate>
 @property (nonatomic, strong) id <MTLDevice> device;
@@ -47,11 +57,11 @@ static bool MenDeal = true;
 - (instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (!self) return nil;
 
     _device = MTLCreateSystemDefaultDevice();
+    NSParameterAssert(_device);
     _commandQueue = [_device newCommandQueue];
-
-    if (!self.device) abort();
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -59,55 +69,56 @@ static bool MenDeal = true;
 
     ImGui::StyleColorsClassic();
     
-    ImFont* font = io.Fonts->AddFontFromMemoryCompressedTTF((void*)zzz_compressed_data, zzz_compressed_size, 60.0f, NULL, io.Fonts->GetGlyphRangesVietnamese());
+    ImFont* font = io.Fonts->AddFontFromMemoryCompressedTTF(
+        (void*)zzz_compressed_data,
+        zzz_compressed_size,
+        60.0f,
+        nullptr,
+        io.Fonts->GetGlyphRangesVietnamese()
+    );
     
     ImGui_ImplMetal_Init(_device);
-
     return self;
 }
 
-+ (void)showChange:(BOOL)open
-{
-    MenDeal = open;
-}
++ (void)showChange:(BOOL)open { MenDeal = open; }
 
-- (MTKView *)mtkView
-{
-    return (MTKView *)self.view;
-}
+- (MTKView *)mtkView { return (MTKView *)self.view; }
 
 - (void)loadView
 {
-    CGFloat w = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width;
-    CGFloat h = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.height;
-    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+    CGRect screenBounds = [UIScreen mainScreen].bounds;
+    self.view = [[MTKView alloc] initWithFrame:screenBounds];
 }
 
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     [super viewDidLoad];
     Spam *spam = [[Spam alloc] init];
     [spam startSpam];
+    
     self.mtkView.device = self.device;
     self.mtkView.delegate = self;
     self.mtkView.clearColor = MTLClearColorMake(0, 0, 0, 0);
-    self.mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+    self.mtkView.opaque = NO;
+    self.mtkView.backgroundColor = [UIColor clearColor];
     self.mtkView.clipsToBounds = YES;
 }
 
-#pragma mark - Interaction
+#pragma mark - Touch Input
 
 - (void)updateIOWithTouchEvent:(UIEvent *)event
 {
     UITouch *anyTouch = event.allTouches.anyObject;
+    if (!anyTouch) return;
+    
     CGPoint touchLocation = [anyTouch locationInView:self.view];
     ImGuiIO &io = ImGui::GetIO();
     io.MousePos = ImVec2(touchLocation.x, touchLocation.y);
 
     BOOL hasActiveTouch = NO;
-    for (UITouch *touch in event.allTouches)
-    {
-        if (touch.phase != UITouchPhaseEnded && touch.phase != UITouchPhaseCancelled)
-        {
+    for (UITouch *touch in event.allTouches) {
+        if (touch.phase != UITouchPhaseEnded && touch.phase != UITouchPhaseCancelled) {
             hasActiveTouch = YES;
             break;
         }
@@ -125,86 +136,81 @@ static bool MenDeal = true;
 - (void)drawInMTKView:(MTKView*)view
 {
     ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize.x = view.bounds.size.width;
-    io.DisplaySize.y = view.bounds.size.height;
-
-    CGFloat framebufferScale = view.window.screen.scale ?: UIScreen.mainScreen.scale;
-    io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
-    io.DeltaTime = 1 / float(view.preferredFramesPerSecond ?: 120);
+    io.DisplaySize = ImVec2(view.bounds.size.width, view.bounds.size.height);
     
-    id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
-    
-    if (MenDeal == true) {
-        [self.view setUserInteractionEnabled:YES];
-    } else {
-        [self.view setUserInteractionEnabled:NO];
-    }
+    CGFloat fbs = view.window.screen.scale ?: UIScreen.mainScreen.scale;
+    io.DisplayFramebufferScale = ImVec2(fbs, fbs);
+    io.DeltaTime = 1.0f / (view.preferredFramesPerSecond ?: 60);
 
-    MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
-    if (renderPassDescriptor != nil)
+    self.view.userInteractionEnabled = MenDeal;
+
+    MTLRenderPassDescriptor* rpd = view.currentRenderPassDescriptor;
+    if (!rpd) return;
+
+    id<MTLCommandBuffer> cb = [self.commandQueue commandBuffer];
+    id<MTLRenderCommandEncoder> enc = [cb renderCommandEncoderWithDescriptor:rpd];
+    [enc pushDebugGroup:@"ImGui"];
+
+    ImGui_ImplMetal_NewFrame(rpd);
+    ImGui::NewFrame();
+
+    ImGui::GetFont()->Scale = 15.f / ImGui::GetFont()->FontSize;
+
+    CGFloat x = (CGRectGetWidth(view.bounds) - 400) * 0.5f;
+    CGFloat y = (CGRectGetHeight(view.bounds) - 300) * 0.5f;
+    ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+
+    if (MenDeal)
     {
-        id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-        [renderEncoder pushDebugGroup:@"ImGui Render"];
-
-        ImGui_ImplMetal_NewFrame(renderPassDescriptor);
-        ImGui::NewFrame();
-        
-        ImFont* font = ImGui::GetFont();
-        font->Scale = 15.f / font->FontSize;
-        
-        CGFloat x = (([UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width) - 400) / 2;
-        CGFloat y = (([UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.height) - 300) / 2;
-        
-        ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
-        
-        if (MenDeal == true)
-        {                
-            ImGui::Begin("EriLibtool Menu", &MenDeal);
-            if (ImGui::BeginTabBar("MainTabBar"))  
+        if (ImGui::Begin("EriLibtool Menu", &MenDeal))
+        {
+            if (ImGui::BeginTabBar("MainTabBar"))
             {
                 if (ImGui::BeginTabItem("Tools"))
                 {
                     Tool::Draw();
-                    ImGui::EndTabItem();  
+                    ImGui::EndTabItem();
                 }
-                ImGui::EndTabBar();  
+                ImGui::EndTabBar();
             }
-            ImGui::End(); 
+            ImGui::End();
         }
-
-        ImGui::Render();
-        ImDrawData* draw_data = ImGui::GetDrawData();
-        ImGui_ImplMetal_RenderDrawData(draw_data, commandBuffer, renderEncoder);
-      
-        [renderEncoder popDebugGroup];
-        [renderEncoder endEncoding];
-
-        [commandBuffer presentDrawable:view.currentDrawable];
     }
 
-    [commandBuffer commit];
+    ImGui::Render();
+    ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), cb, enc);
+
+    [enc popDebugGroup];
+    [enc endEncoding];
+    [cb presentDrawable:view.currentDrawable];
+    [cb commit];
 }
 
 - (void)mtkView:(MTKView*)view drawableSizeWillChange:(CGSize)size {}
 
 @end
 
-// --- Khởi chạy Tweak qua Constructor ---
-void *hack_thread(void *) {
+// Entry point
+static void* hack_thread(void*)
+{
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].windows[0];
-        ImGuiDrawView *drawView = [[ImGuiDrawView alloc] init];
-        [window.rootViewController addChildViewController:drawView];
-        [window.rootViewController.view addSubview:drawView.view];
+        UIWindow *window = [UIApplication sharedApplication].windows.firstObject;
+        if (!window) return;
+        
+        ImGuiDrawView *vc = [[ImGuiDrawView alloc] init];
+        [window.rootViewController addChildViewController:vc];
+        [window.rootViewController.view addSubview:vc.view];
+        vc.view.frame = window.rootViewController.view.bounds;
     });
-
     return nullptr;
 }
 
-__attribute__((constructor)) void lib_main() {
+__attribute__((constructor)) static void lib_main(void)
+{
     pthread_t ptid;
     pthread_create(&ptid, nullptr, hack_thread, nullptr);
+    pthread_detach(ptid);
 }
