@@ -1,0 +1,25 @@
+THEOS_DEVICE_IP = localhost
+TARGET := iphone:clang:latest:14.0
+ARCHS = arm64 arm64e
+
+include $(THEOS)/makefiles/common.mk
+
+TWEAK_NAME = EriLibtool
+
+EriLibtool_FILES = Main.mm[span_10](start_span)[span_10](end_span) \
+                   $(wildcard 1110/*.cpp)[span_11](start_span)[span_11](end_span) \
+                   $(wildcard 1110/*.mm)[span_12](start_span)[span_12](end_span) \
+                   $(wildcard 5Toubun/*.cpp)[span_13](start_span)[span_13](end_span) \
+                   $(wildcard Esp/*.cpp)[span_14](start_span)[span_14](end_span) \
+                   $(wildcard Menu/*.cpp)[span_15](start_span)[span_15](end_span) \
+                   $(wildcard Tool/*.cpp)[span_16](start_span)[span_16](end_span) \
+                   $(wildcard IMGUI/*.cpp)[span_17](start_span)[span_17](end_span) \
+                   IMGUI/backends/imgui_impl_metal.mm[span_18](start_span)[span_18](end_span) \
+                   $(wildcard linh_tinh/*.m)[span_19](start_span)[span_19](end_span) \
+                   $(wildcard linh_tinh/*.mm)[span_20](start_span)[span_20](end_span) \
+                   $(wildcard lib/*.m)[span_21](start_span)[span_21](end_span)
+
+EriLibtool_CFLAGS = -fobjc-arc -IIMGUI -IIncludes -IMenu -Iesp -I1110
+EriLibtool_LIBRARIES = dobby
+
+include $(THEOS_MAKEFILES_INC)/tweak.mk
