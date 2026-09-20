@@ -1,4 +1,4 @@
-name: Build All Platforms
+Name: Build All Platforms
 
 on:
   push:
@@ -119,7 +119,6 @@ jobs:
             sed -i '1i #import <array>' Main.mm
           fi
 
-          # Cấu hình filter chạy trên tất cả ứng dụng (*)
           if [ ! -f "EriLibtool.plist" ]; then
             cat << 'EOF' > EriLibtool.plist
           { Filter = { Bundles = { "*" }; }; }
@@ -135,10 +134,18 @@ jobs:
 
           TWEAK_NAME := EriLibtool
 
-          EriLibtool_FILES = Main.mm $(wildcard *.m) $(wildcard *.cpp) $(wildcard Menu/*.cpp) $(wildcard Menu/*.m) $(wildcard Tool/*.cpp) $(wildcard Tool/*.m)
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni
+          EriLibtool_FILES = Main.mm $(wildcard *.m) $(wildcard *.cpp) \
+                             $(wildcard Menu/*.cpp) $(wildcard Menu/*.m) \
+                             $(wildcard Tool/*.cpp) $(wildcard Tool/*.m) \
+                             $(wildcard 1110/*.cpp) $(wildcard 1110/*.mm) \
+                             $(wildcard Esp/*.cpp) $(wildcard IMGUI/*.cpp) \
+                             IMGUI/backends/imgui_impl_metal.mm \
+                             $(wildcard linh_tinh/*.m) $(wildcard lib/*.m)
+                             
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni -I./1110 -I./Esp
+          EriLibtool_LIBRARIES = dobby
 
-          include $(THEOS_MAKE_PATH)/tweak.mk
+          include $(THEOS)/makefiles/tweak.mk
           EOF
           fi
 
