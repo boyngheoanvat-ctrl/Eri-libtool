@@ -12,29 +12,31 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git build-essential \
-            libcurl4-openssl-dev libzip-dev bsdmainutils \
-            gcc-multilib g++-multilib unzip curl
+          sudo apt-get install -y --no-install-recommends \
+            git build-essential curl unzip \
+            libcurl4-openssl-dev libzip-dev \
+            gcc-multilib g++-multilib
 
       - name: Setup Theos
         run: |
           git clone --depth=1 https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
+          cd $GITHUB_WORKSPACE/theos
+          # ✅ This fixes "vendor/include missing" — fetches vendor tools
+          ./bin/update-theos
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
 
-      # ✅ INSTALL SDKs — THIS WAS MISSING
       - name: Install iOS SDKs
         run: |
           cd $THEOS
-          mkdir -p sdks
-          cd sdks
-          curl -LO https://github.com/theos/sdks/archive/refs/heads/master.zip
-          unzip -q master.zip
+          mkdir -p sdks && cd sdks
+          curl -fsSL https://github.com/theos/sdks/archive/refs/heads/master.zip -o sdks.zip
+          unzip -q sdks.zip
           mv sdks-master/*.sdk ./
-          rm -rf sdks-master master.zip
-          ls -la  # Should show iPhoneOS16.5.sdk etc.
+          rm -rf sdks-master sdks.zip
+          ls -la  # Verify SDKs exist
 
       - name: Build
         run: |
