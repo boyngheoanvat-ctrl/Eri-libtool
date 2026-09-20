@@ -1,18 +1,25 @@
-export THEOS=/Users/dothanh1110/theos
-ARCHS = arm64
-FINALPACKAGE = 1
-FOR_RELEASE = 1
-WARNINGS = 1
+THEOS_DEVICE_IP = localhost
+TARGET := iphone:clang:latest:14.0
+ARCHS = arm64 arm64e
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = 34306jit
+TWEAK_NAME = EriLibtool
 
-$(TWEAK_NAME)_FRAMEWORKS =  UIKit Foundation Security QuartzCore CoreGraphics CoreText  AVFoundation Accelerate GLKit SystemConfiguration GameController
-$(TWEAK_NAME)_CCFLAGS = -fno-rtti -fvisibility=hidden -DNDEBUG -std=c++11
-$(TWEAK_NAME)_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-value  -DHAVE_INTTYPES_H -DHAVE_PKCRYPT -DHAVE_STDINT_H -DHAVE_WZAES -DHAVE_ZLIB  
-$(TWEAK_NAME)_LDFLAGS +=  -lresolv -lz -liconv lib/libdaubuoi.a lib/libmonostring.a linh_tinh/spam.a
-$(TWEAK_NAME)_FILES = ImGuiDrawView.mm $(wildcard Esp/*.mm) $(wildcard Esp/*.m) $(wildcard IMGUI/*.cpp) $(wildcard IMGUI/*.mm)
+EriLibtool_FILES = Main.mm \
+                   $(wildcard 1110/*.cpp) \
+                   $(wildcard 1110/*.mm) \
+                   $(wildcard 5Toubun/*.cpp) \
+                   $(wildcard Esp/*.cpp) \
+                   $(wildcard Menu/*.cpp) \
+                   $(wildcard Tool/*.cpp) \
+                   $(wildcard IMGUI/*.cpp) \
+                   IMGUI/backends/imgui_impl_metal.mm \
+                   $(wildcard linh_tinh/*.m) \
+                   $(wildcard linh_tinh/*.mm) \
+                   $(wildcard lib/*.m)
 
-include $(THEOS_MAKE_PATH)/tweak.mk
+EriLibtool_CFLAGS = -fobjc-arc -IIMGUI -IIncludes -IMenu -IEsp -I1110
+EriLibtool_LIBRARIES = dobby
 
+include $(THEOS_MAKEFILES_INC)/tweak.mk
