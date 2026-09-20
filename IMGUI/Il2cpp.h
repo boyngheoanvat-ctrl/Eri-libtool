@@ -1,13 +1,13 @@
 #pragma once
 
+// ✅ Disable libc++ modules BEFORE ANY includes — fixes "could not build module 'std'"
+#define _LIBCPP_NO_MODULES 1
+
 #include <stdio.h>
 #include <string>
-#include <inttypes.h>
-#include <codecvt>
-#include <locale>
+#include <vector>
+#include <cstdint>
 #include <dlfcn.h>
-
-using namespace std;
 
 typedef void(*Il2CppMethodPointer)();
 
@@ -110,6 +110,7 @@ struct Il2CppClass
 
 typedef int32_t il2cpp_array_size_t;
 typedef int32_t il2cpp_array_lower_bound_t;
+
 struct Il2CppArrayBounds
 {
     il2cpp_array_size_t length;
@@ -146,40 +147,26 @@ struct MethodInfo
 template<typename T> struct Il2CppArray {
     Il2CppClass *klass;
     void *monitor;
-    void *bounds;
+    Il2CppArrayBounds* bounds;
     int max_length;
     T m_Items[65535];
 
-    int getLength() {
-        return max_length;
-    }
+    int getLength() const { return max_length; }
+    T* getPointer() { return &m_Items[0]; }
 
-    T *getPointer() {
-        return (T *)m_Items;
-    }
+    T& operator[](int i) { return m_Items[i]; }
+    const T& operator[](int i) const { return m_Items[i]; }
 
-    T &operator[](int i) {
-        return m_Items[i];
-    }
-
-    T &operator[](int i) const {
-        return m_Items[i];
-    }
-
-    std::vector<T> toCPPlist() {
+    std::vector<T> toCPPlist() const {
         std::vector<T> ret;
         ret.reserve(max_length);
-
-        for (int i = 0; i < max_length; i++) {
+        for (int i = 0; i < max_length; i++)
             ret.push_back(m_Items[i]);
-        }
-
         return ret;
     }
 };
 
-template<typename T>
-using Array = Il2CppArray<T>;
+template<typename T> using Array = Il2CppArray<T>;
 
 template<typename T> struct Il2CppList {
     Il2CppClass *klass;
@@ -188,75 +175,43 @@ template<typename T> struct Il2CppList {
     int size;
     int version;
 
-    T *getItems() {
-        return items->getPointer();
-    }
+    T* getItems() { return items ? items->getPointer() : nullptr; }
+    int getSize() const { return size; }
+    int getVersion() const { return version; }
 
-    int getSize() {
-        return size;
-    }
+    T& operator[](int i) { return items->m_Items[i]; }
+    const T& operator[](int i) const { return items->m_Items[i]; }
 
-    int getVersion() {
-        return version;
-    }
-
-    T &operator[](int i) {
-        return items->m_Items[i];
-    }
-
-    T &operator[](int i) const {
-        return items->m_Items[i];
-    }
-
-      std::vector<T> toCPPlist() {
+    std::vector<T> toCPPlist() const {
         std::vector<T> ret;
-        ret.reserve(size); // Reserve space in the vector for the items.
-
-        for (int i = 0; i < size; i++) {
+        ret.reserve(size);
+        for (int i = 0; i < size; i++)
             ret.push_back(items->m_Items[i]);
-        }
-
         return ret;
     }
 };
 
-template<typename T>
-using List = Il2CppList<T>;
+template<typename T> using List = Il2CppList<T>;
 
 template<typename K, typename V> struct Il2CppDictionary {
     Il2CppClass *klass;
     void *unk1;
-    Il2CppArray<int **> *table;
-    Il2CppArray<void **> *linkSlots;
+    Il2CppArray<int**> *table;
+    Il2CppArray<void**> *linkSlots;
     Il2CppArray<K> *keys;
     Il2CppArray<V> *values;
     int touchedSlots;
     int emptySlot;
     int size;
 
-    K *getKeys() {
-        return keys->getPointer();
-    }
-
-    V *getValues() {
-        return values->getPointer();
-    }
-
-    int getNumKeys() {
-        return keys->getLength();
-    }
-
-    int getNumValues() {
-        return values->getLength();
-    }
-
-    int getSize() {
-        return size;
-    }
+    K* getKeys() { return keys ? keys->getPointer() : nullptr; }
+    V* getValues() { return values ? values->getPointer() : nullptr; }
+    int getNumKeys() const { return keys ? keys->getLength() : 0; }
+    int getNumValues() const { return values ? values->getLength() : 0; }
+    int getSize() const { return size; }
 };
 
-template<typename K, typename V>
-using Dictionary = Il2CppDictionary<K, V>;
+template<typename K, typename V> using Dictionary = Il2CppDictionary<K, V>;
 
 namespace IL2Cpp 
 {
@@ -281,12 +236,11 @@ namespace IL2Cpp
     extern void (*il2cpp_gchandle_free)(uint32_t gchandle);
 
     void Attach();
-    void *Resolve(const char *);
-    void *GetImage(const char* image);
-    void *GetClass(const char *image, const char *namespaze, const char *clazz);
-    const void *GetMethodOffset(const char* image, const char* namespaze, const char* klass, const char* name, int argsCount = 0);
-    uintptr_t GetFieldOffset(const char *image, const char *namespaze, const char *clazz, const char *name);
-    void GetStaticFieldValue(const char *image, const char *namespaze, const char *clazz, const char *name, void *output);
-    void SetStaticFieldValue(const char *image, const char *namespaze, const char *clazz, const char *name, void *value);
+    void* Resolve(const char*);
+    void* GetImage(const char* image);
+    void* GetClass(const char* image, const char* namespaze, const char* clazz);
+    const void* GetMethodOffset(const char* image, const char* namespaze, const char* klass, const char* name, int argsCount);
+    uintptr_t GetFieldOffset(const char* image, const char* namespaze, const char* klass, const char* name);
+    void GetStaticFieldValue(const char* image, const char* namespaze, const char* klass, const char* name, void* output);
+    void SetStaticFieldValue(const char* image, const char* namespaze, const char* klass, const char* name, void* value);
 }
-
