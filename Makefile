@@ -1,11 +1,7 @@
-# ============================================================
-# Makefile — FULL FIXED
-# ============================================================
 THEOS_DEVICE_IP = localhost
 TARGET := iphone:clang:16.5:14.0
 ARCHS = arm64 arm64e
 
-# ✅ Use libc++ (matches Theos Linux toolchain)
 CXXFLAGS += -stdlib=libc++ -std=c++17 -D_LIBCPP_NO_MODULES
 LDFLAGS += -stdlib=libc++ -lc++
 
@@ -24,12 +20,14 @@ EriLibtool_FILES = Main.mm \
                    $(wildcard Menu/*.cpp) \
                    $(wildcard Tool/*.cpp) \
                    $(wildcard IMGUI/*.cpp) \
-                   IMGUI/backends/imgui_impl_metal.mm \
+                   IMGUI/imgui_impl_metal.mm \
+                   $(wildcard Il2cpp/*.cpp) \
+                   $(wildcard Il2cpp/*.mm) \
                    $(wildcard linh_tinh/*.m) \
                    $(wildcard linh_tinh/*.mm) \
                    $(wildcard lib/*.m)
 
-EriLibtool_CFLAGS = -fobjc-arc -IIMGUI -IIncludes -IMenu -IEsp -I1110
+EriLibtool_CFLAGS = -fobjc-arc -IIMGUI -IIncludes -IMenu -IEsp -I1110 -IIl2cpp
 EriLibtool_LIBRARIES = dobby c++
 EriLibtool_FRAMEWORKS = UIKit Foundation Metal MetalKit CoreGraphics
 
