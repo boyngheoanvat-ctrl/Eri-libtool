@@ -139,7 +139,8 @@ jobs:
                              \$(wildcard Tool/*.cpp) \$(wildcard Tool/*.m) \
                              \$(wildcard 1110/*.cpp) \$(wildcard 1110/*.mm) \
                              \$(wildcard Esp/*.cpp) \$(wildcard IMGUI/*.cpp) \
-                             IMGUI/backends/imgui_impl_metal.mm \
+                             \$(wildcard IMGUI/backends/*.mm) \
+                             \$(wildcard imgui/backends/*.mm) \
                              \$(wildcard linh_tinh/*.m) \$(wildcard lib/*.m)
                              
           EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni -I./1110 -I./Esp
