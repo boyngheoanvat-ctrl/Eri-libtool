@@ -115,6 +115,8 @@ jobs:
 
       - name: Build iOS Tweak
         run: |
+          export THEOS="$GITHUB_WORKSPACE/theos"
+
           if ! grep -q "#import <array>" Main.mm; then
             sed -i '1i #import <array>' Main.mm
           fi
@@ -152,7 +154,7 @@ jobs:
           if [ ! -f "control" ]; then
             cat << 'EOF' > control
           Package: com.example.erilibtool
-          Name: EriLibtool 
+          Name: EriLibtool
           Depends: mobilesubstrate
           Version: 0.0.1
           Architecture: iphoneos-arm
@@ -163,7 +165,6 @@ jobs:
           EOF
           fi
 
-          export THEOS="$GITHUB_WORKSPACE/theos"
           make package
 
       - name: Upload DEB Artifact
