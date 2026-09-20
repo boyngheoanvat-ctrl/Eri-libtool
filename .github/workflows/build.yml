@@ -16,17 +16,25 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            git build-essential curl unzip \
+            git build-essential curl unzip xz-utils \
             libcurl4-openssl-dev libzip-dev \
             gcc-multilib g++-multilib
 
       - name: Setup Theos
         run: |
           export THEOS=$GITHUB_WORKSPACE/theos
-          # ✅ Clone WITH submodules = vendor/ included immediately
           git clone --recursive --depth=1 https://github.com/theos/theos.git "$THEOS"
-          # ✅ Export THEOS to GitHub env for all subsequent steps
           echo "THEOS=$THEOS" >> $GITHUB_ENV
+
+      # ✅ INSTALL LINUX TOOLCHAIN — fixes "clang: No such file or directory"
+      - name: Install Theos Linux toolchain
+        run: |
+          cd "$THEOS"
+          curl -fsSL https://github.com/theos/toolchain/archive/refs/heads/master.tar.gz -o toolchain.tar.gz
+          tar -xf toolchain.tar.gz
+          mv toolchain-master toolchain
+          rm toolchain.tar.gz
+          ls -la toolchain/linux/iphone/bin/  # Should show clang
 
       - name: Install iOS SDKs
         run: |
@@ -34,8 +42,7 @@ jobs:
           curl -fsSL https://github.com/theos/sdks/archive/refs/heads/master.zip -o sdks.zip
           unzip -q sdks.zip
           mv sdks-master/*.sdk ./
-          rm -rf sdks-master sdks.zip sdks.zip
-          ls -la  # Verify SDKs exist
+          rm -rf sdks-master sdks.zip
 
       - name: Build
         run: |
