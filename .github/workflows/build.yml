@@ -15,28 +15,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Prepare Mock Directories and Files
-        run: |
-          mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
-          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h jni/jni.h android/native_window_jni.h
-
-          echo '#pragma once' > Includes/NovaProxy.h
-          echo '#include "../eri.h"' >> Includes/NovaProxy.h
-          echo '#pragma once' > nlohmann/json.hpp
-          echo '#include "../eri.h"' >> nlohmann/json.hpp
-          echo '#pragma once' > Il2cpp/Il2cpp.h
-          echo '#include "../eri.h"' >> Il2cpp/Il2cpp.h
-          echo '#pragma once' > imgui/imgui.h
-          echo '#include "../eri.h"' >> imgui/imgui.h
-          echo '#pragma once' > Menu/ImGui.h
-          echo '#include "../eri.h"' >> Menu/ImGui.h
-          echo '#pragma once' > Tool/Keyboard.h
-          echo '#include "../eri.h"' >> Tool/Keyboard.h
-          echo '#pragma once' > Includes/Logger.h
-          echo '#include "../eri.h"' >> Includes/Logger.h
-          echo '#pragma once' > Includes/obfuscate.h
-          echo '#include "../eri.h"' >> Includes/obfuscate.h
-
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
         id: setup-ndk
@@ -70,28 +48,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
-
-      - name: Prepare Mock Directories and Files for iOS
-        run: |
-          mkdir -p Il2cpp Includes Menu Tool imgui nlohmann jni android
-          touch Il2cpp/il2cpp-class.h Includes/Utils.h Tool/Tool.h Tool/Util.h Tool/Unity.h utils.h imgui/imgui_internal.h jni/jni.h android/native_window_jni.h
-
-          echo '#pragma once' > Includes/NovaProxy.h
-          echo '#include "../eri.h"' >> Includes/NovaProxy.h
-          echo '#pragma once' > nlohmann/json.hpp
-          echo '#include "../eri.h"' >> nlohmann/json.hpp
-          echo '#pragma once' > Il2cpp/Il2cpp.h
-          echo '#include "../eri.h"' >> Il2cpp/Il2cpp.h
-          echo '#pragma once' > imgui/imgui.h
-          echo '#include "../eri.h"' >> imgui/imgui.h
-          echo '#pragma once' > Menu/ImGui.h
-          echo '#include "../eri.h"' >> Menu/ImGui.h
-          echo '#pragma once' > Tool/Keyboard.h
-          echo '#include "../eri.h"' >> Tool/Keyboard.h
-          echo '#pragma once' > Includes/Logger.h
-          echo '#include "../eri.h"' >> Includes/Logger.h
-          echo '#pragma once' > Includes/obfuscate.h
-          echo '#include "../eri.h"' >> Includes/obfuscate.h
 
       - name: Setup Theos
         run: |
@@ -138,13 +94,13 @@ jobs:
                              \$(wildcard Menu/*.cpp) \$(wildcard Menu/*.m) \
                              \$(wildcard Tool/*.cpp) \$(wildcard Tool/*.m) \
                              \$(wildcard 1110/*.cpp) \$(wildcard 1110/*.mm) \
-                             \$(wildcard Esp/*.cpp) \$(wildcard IMGUI/*.cpp) \
-                             \$(wildcard IMGUI/backends/*.mm) \
-                             \$(wildcard imgui/backends/*.mm) \
+                             \$(wildcard Esp/*.cpp) \$(wildcard Esp/*.m) \
+                             \$(wildcard IMGUI/*.cpp) \$(wildcard imgui/*.cpp) \
+                             \$(wildcard 5Toubun/*.cpp) \$(wildcard 5Toubun/*.m) \
                              \$(wildcard linh_tinh/*.m) \$(wildcard lib/*.m)
                              
-          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni -I./1110 -I./Esp
-          EriLibtool_LIBRARIES = dobby
+          EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./IMGUI -I./jni -I./1110 -I./Esp -I./5Toubun -I./lib -I./linh_tinh
+          EriLibtool_LIBRARIES = 
 
           include \$(THEOS)/makefiles/tweak.mk
           EOF
