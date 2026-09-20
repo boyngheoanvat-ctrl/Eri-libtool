@@ -1,128 +1,31 @@
-name: Build All Platforms
-
+name: Build EriLibtool
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build-android:
-    name: Build Android (.so)
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r26b
-          add-to-path: true
-
-      - name: Configure CMake
+      - name: Install dependencies
         run: |
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake" \
-            -DANDROID_ABI="arm64-v8a" \
-            -DANDROID_PLATFORM="android-21"
-
-      - name: Build Project
-        run: cmake --build build --config Release
-
-      - name: Upload Android Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-mod-library
-          path: build/*.so
-          retention-days: 7
-
-  build-ios:
-    name: Build iOS (.deb)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+          sudo apt-get update
+          sudo apt-get install -y git build-essential \
+            libcurl4-openssl-dev libzip-dev bsdmainutils \
+            gcc-multilib g++-multilib  # Critical for cross-compile
 
       - name: Setup Theos
         run: |
-          git clone --depth=1 --recursive https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
+          git clone --depth=1 https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
 
-      - name: Install Linux Toolchain
+      - name: Build
         run: |
-          cd "$GITHUB_WORKSPACE/theos"
-          curl -sL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-x86_64.tar.xz | tar -xJvf - -C toolchain/
-
-      - name: Download SDK
-        run: |
-          mkdir -p "$THEOS/sdks"
-          cd "$THEOS/sdks"
-          curl -LO https://github.com/theos/sdks/archive/refs/heads/master.zip
-          unzip -q master.zip
-          mv sdks-master/*.sdk ./
-          rm -rf master.zip sdks-master
-          echo "THEOS_SDK=iPhoneOS15.6.sdk" >> $GITHUB_ENV
-
-      - name: Build iOS Tweak
-        run: |
-          THEOS_PATH="$GITHUB_WORKSPACE/theos"
-
-          if ! grep -q "#import <array>" Main.mm; then
-            sed -i '1i #import <array>' Main.mm
-          fi
-
-          cat << 'EOF' > EriLibtool.plist
-          { Filter = { Bundles = { "*" }; }; }
-          EOF
-
-          cat << EOF > Makefile
-          THEOS = $THEOS_PATH
-          TARGET := iphone:clang:latest:14.0
-          ARCHS := arm64 arm64e
-
-          include \$(THEOS)/makefiles/common.mk
-
-          TWEAK_NAME := EriLibtool
-
-          EriLibtool_FILES = Main.mm \$(wildcard *.m) \$(wildcard *.cpp) \
-                             \$(wildcard Menu/*.cpp) \$(wildcard Menu/*.m) \
-                             \$(wildcard Tool/*.cpp) \$(wildcard Tool/*.m) \
-                             \$(wildcard 1110/*.cpp) \$(wildcard 1110/*.mm) \
-                             \$(wildcard Esp/*.cpp) \$(wildcard Esp/*.m) \
-                             \$(wildcard IMGUI/*.cpp) \$(wildcard imgui/*.cpp) \
-                             \$(wildcard 5Toubun/*.cpp) \$(wildcard 5Toubun/*.m) \
-                             \$(wildcard linh_tinh/*.m) \$(wildcard lib/*.m)
-                             
-          EriLibtool_CFLAGS = -fobjc-arc -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./IMGUI -I./jni -I./1110 -I./Esp -I./5Toubun -I./lib -I./linh_tinh
-          EriLibtool_CCFLAGS = -std=c++17
-          EriLibtool_LIBRARIES = 
-
-          include \$(THEOS)/makefiles/tweak.mk
-          EOF
-
-          cat << 'EOF' > control
-          Package: com.example.erilibtool
-          Name: EriLibtool
-          Depends: mobilesubstrate
-          Version: 0.0.1
-          Architecture: iphoneos-arm
-          Description: An awesome iOS tweak!
-          Maintainer: Developer
-          Author: Developer
-          Section: Tweaks
-          EOF
-
-          make package
-
-      - name: Upload DEB Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-tweak-deb
-          path: packages/*.deb
-          retention-days: 7
+          export THEOS=$GITHUB_WORKSPACE/theos
+          make clean
+          make DEBUG=0
