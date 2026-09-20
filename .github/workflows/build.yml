@@ -152,7 +152,7 @@ jobs:
           if [ ! -f "control" ]; then
             cat << 'EOF' > control
           Package: com.example.erilibtool
-          Name: EriLibtool 
+          Name: EriLibtool
           Depends: mobilesubstrate
           Version: 0.0.1
           Architecture: iphoneos-arm
