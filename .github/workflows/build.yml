@@ -17,12 +17,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git build-essential \
             libcurl4-openssl-dev libzip-dev bsdmainutils \
-            gcc-multilib g++-multilib  # Critical for cross-compile
+            gcc-multilib g++-multilib unzip curl
 
       - name: Setup Theos
         run: |
           git clone --depth=1 https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
+
+      # ✅ INSTALL SDKs — THIS WAS MISSING
+      - name: Install iOS SDKs
+        run: |
+          cd $THEOS
+          mkdir -p sdks
+          cd sdks
+          curl -LO https://github.com/theos/sdks/archive/refs/heads/master.zip
+          unzip -q master.zip
+          mv sdks-master/*.sdk ./
+          rm -rf sdks-master master.zip
+          ls -la  # Should show iPhoneOS16.5.sdk etc.
 
       - name: Build
         run: |
