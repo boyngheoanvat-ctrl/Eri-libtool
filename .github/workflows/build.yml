@@ -115,7 +115,7 @@ jobs:
 
       - name: Build iOS Tweak
         run: |
-          export THEOS="$GITHUB_WORKSPACE/theos"
+          THEOS_PATH="$GITHUB_WORKSPACE/theos"
 
           if ! grep -q "#import <array>" Main.mm; then
             sed -i '1i #import <array>' Main.mm
@@ -128,26 +128,27 @@ jobs:
           fi
 
           if [ ! -f "Makefile" ]; then
-            cat << 'EOF' > Makefile
+            cat << EOF > Makefile
+          THEOS = $THEOS_PATH
           TARGET := iphone:clang:latest:14.0
           ARCHS := arm64 arm64e
 
-          include $(THEOS)/makefiles/common.mk
+          include \$(THEOS)/makefiles/common.mk
 
           TWEAK_NAME := EriLibtool
 
-          EriLibtool_FILES = Main.mm $(wildcard *.m) $(wildcard *.cpp) \
-                             $(wildcard Menu/*.cpp) $(wildcard Menu/*.m) \
-                             $(wildcard Tool/*.cpp) $(wildcard Tool/*.m) \
-                             $(wildcard 1110/*.cpp) $(wildcard 1110/*.mm) \
-                             $(wildcard Esp/*.cpp) $(wildcard IMGUI/*.cpp) \
+          EriLibtool_FILES = Main.mm \$(wildcard *.m) \$(wildcard *.cpp) \
+                             \$(wildcard Menu/*.cpp) \$(wildcard Menu/*.m) \
+                             \$(wildcard Tool/*.cpp) \$(wildcard Tool/*.m) \
+                             \$(wildcard 1110/*.cpp) \$(wildcard 1110/*.mm) \
+                             \$(wildcard Esp/*.cpp) \$(wildcard IMGUI/*.cpp) \
                              IMGUI/backends/imgui_impl_metal.mm \
-                             $(wildcard linh_tinh/*.m) $(wildcard lib/*.m)
+                             \$(wildcard linh_tinh/*.m) \$(wildcard lib/*.m)
                              
           EriLibtool_CFLAGS = -fobjc-arc -std=c++17 -Wno-error=deprecated-declarations -Wno-error=return-type -Wno-error=unused-const-variable -I./ -I./Includes -I./Menu -I./Il2cpp -I./imgui -I./jni -I./1110 -I./Esp
           EriLibtool_LIBRARIES = dobby
 
-          include $(THEOS)/makefiles/tweak.mk
+          include \$(THEOS)/makefiles/tweak.mk
           EOF
           fi
 
