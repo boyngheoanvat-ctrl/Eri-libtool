@@ -42,6 +42,11 @@ struct HookerData {
     MethodInfo* method = nullptr;
 };
 
+// ==========================================
+// CHỈ KHAI BÁO KHI CHƯA CÓ IMGUI CHÍNH THỨC
+// ==========================================
+#ifndef IMGUI_VERSION
+
 struct ImVec2 { float x, y; ImVec2(float x=0, float y=0):x(x),y(y){} };
 struct ImVec4 { float x, y, z, w; };
 struct ImGuiStyle {};
@@ -97,6 +102,9 @@ namespace ImGui {
     inline ImVec2 GetWindowSize() { return ImVec2(); }
     inline ImVec2 GetWindowPos() { return ImVec2(); }
 }
+
+#endif // IMGUI_VERSION
+// ==========================================
 
 inline std::unordered_map<void*, HookerData> hookerMap;
 inline int maxLine = 0;
