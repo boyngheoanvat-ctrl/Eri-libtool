@@ -121,14 +121,11 @@ jobs:
             sed -i '1i #import <array>' Main.mm
           fi
 
-          if [ ! -f "EriLibtool.plist" ]; then
-            cat << 'EOF' > EriLibtool.plist
+          cat << 'EOF' > EriLibtool.plist
           { Filter = { Bundles = { "*" }; }; }
           EOF
-          fi
 
-          if [ ! -f "Makefile" ]; then
-            cat << EOF > Makefile
+          cat << EOF > Makefile
           THEOS = $THEOS_PATH
           TARGET := iphone:clang:latest:14.0
           ARCHS := arm64 arm64e
@@ -150,10 +147,8 @@ jobs:
 
           include \$(THEOS)/makefiles/tweak.mk
           EOF
-          fi
 
-          if [ ! -f "control" ]; then
-            cat << 'EOF' > control
+          cat << 'EOF' > control
           Package: com.example.erilibtool
           Name: EriLibtool
           Depends: mobilesubstrate
@@ -164,7 +159,6 @@ jobs:
           Author: Developer
           Section: Tweaks
           EOF
-          fi
 
           make package
 
